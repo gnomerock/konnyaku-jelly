@@ -48,6 +48,17 @@ dotnet build Konyakku/Konyakku.csproj -c Release
 In game: `/xlsettings` → Experimental → Dev Plugin Locations → add
 `D:\repo\konyaku\Konyakku\bin\Release\Konyakku.dll`, then enable it in `/xlplugins` → Dev Tools.
 
+## Releasing
+
+Push a version tag (4 parts, matching the assembly version):
+
+```
+git tag v0.2.0.0
+git push origin v0.2.0.0
+```
+
+GitHub Actions builds the plugin, creates the release with `latest.zip`, and updates `repo.json` on `main`, so players get the update in `/xlplugins`.
+
 ## Notes
 
 - Default channels skip Shout/Yell (busy cities would burn your quota). You can turn them on in settings.

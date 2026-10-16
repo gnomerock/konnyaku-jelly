@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      DALAMUD_HOME: ${{ github.workspace }}/dalamud
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Download Dalamud
+        run: |
+          mkdir -p "$DALAMUD_HOME"
+          curl -fsSL https://goatcorp.github.io/dalamud-distrib/latest.zip -o dalamud.zip
+          unzip -q dalamud.zip -d "$DALAMUD_HOME"
+
+      - name: Build
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          dotnet build Konyakku/Konyakku.csproj -c Release -p:Version="$VERSION"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" Konyakku/bin/Release/Konyakku/latest.zip \
+            --title "Konyakku $VERSION" --generate-notes
+
+      - name: Update repo.json
+        run: |
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/latest.zip"
+          API=$(jq '.DalamudApiLevel' Konyakku/bin/Release/Konyakku/Konyakku.json)
+          jq --arg v "$VERSION" --arg url "$URL" --argjson api "$API" \
+            'map(.AssemblyVersion = $v | .DalamudApiLevel = $api
+                 | .DownloadLinkInstall = $url | .DownloadLinkUpdate = $url | .DownloadLinkTesting = $url
+                 | .LastUpdate = (now | floor))' repo.json > repo.tmp && mv repo.tmp repo.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Update repo.json for $GITHUB_REF_NAME"
+          git push origin main
