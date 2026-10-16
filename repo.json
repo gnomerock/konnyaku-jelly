@@ -1,0 +1,19 @@
+[
+  {
+    "Author": "gnomerock",
+    "Name": "Konyakku",
+    "InternalName": "Konyakku",
+    "AssemblyVersion": "0.1.0.0",
+    "Punchline": "วุ้นแปลภาษา — translate FFXIV chat with ChatGPT.",
+    "Description": "Translates incoming chat into your language and lets you write messages in your own language, translated before sending. Works with your ChatGPT subscription (via Codex CLI login) or an OpenAI API key.",
+    "ApplicableVersion": "any",
+    "RepoUrl": "https://github.com/gnomerock/konyakku",
+    "Tags": ["chat", "translation", "translate", "thai", "chatgpt", "openai"],
+    "DalamudApiLevel": 15,
+    "LoadPriority": 0,
+    "AcceptsFeedback": true,
+    "DownloadLinkInstall": "https://github.com/gnomerock/konyakku/releases/download/v0.1.0.0/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/gnomerock/konyakku/releases/download/v0.1.0.0/latest.zip",
+    "DownloadLinkTesting": "https://github.com/gnomerock/konyakku/releases/download/v0.1.0.0/latest.zip"
+  }
+]

@@ -27,6 +27,16 @@ codex login        # เลือก "Sign in with ChatGPT"
 - `/tl <text>` — แปลเป็นภาษาขาออกแล้ว copy ไว้ใน clipboard
 - `/tl /p <text>` — แปลแล้วส่งเข้า party ทันที (ใช้ `/fc`, `/s`, `/l1`, `/t Name@World` ฯลฯ ได้)
 
+## Install (custom repo)
+
+1. In game, type `/xlsettings` → **Experimental** tab
+2. Under **Custom Plugin Repositories**, paste:
+   ```
+   https://raw.githubusercontent.com/gnomerock/konyakku/main/repo.json
+   ```
+   tick **Enabled**, then click **+** and **Save and Close**
+3. `/xlplugins` → **All Plugins** → search for **Konyakku** → Install
+
 ## Build / dev install
 
 Requires .NET 10 SDK and XIVLauncher with Dalamud installed (references come from `%APPDATA%\XIVLauncher\addon\Hooks\dev`).
