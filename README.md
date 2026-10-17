@@ -6,7 +6,7 @@ Dalamud plugin for FFXIV that translates chat with ChatGPT, Claude or Gemini.
 
 **📖 Illustrated tutorial: https://gnomerock.github.io/konyakku/**
 
-- **Read chat**: messages from Say / Party / FC / Tell / LS / CWLS … are translated into your language (default: English) and shown in the Konnyaku Jelly window.
+- **Read chat**: Party and Alliance chat (plus FC, Tells, LS, CWLS … if you turn them on) is translated into your language (default: English) and shown in the Konnyaku Jelly window.
 - **Write chat**: type in your own language, pick a channel from the **To** dropdown, and it goes out translated (default: Japanese).
 - **Paste**: translate any Japanese text you copied, e.g. from a website or a Discord message.
 - **Party Finder**: right-click a listing → **Translate**.
@@ -22,7 +22,7 @@ Dalamud plugin for FFXIV that translates chat with ChatGPT, Claude or Gemini.
 1. In game, type `/xlsettings` → **Experimental** tab.
 2. Under **Custom Plugin Repositories**, paste:
    ```
-   https://raw.githubusercontent.com/gnomerock/konyakku/main/repo.json
+   https://raw.githubusercontent.com/gnomerock/Gnomod/main/repo.json
    ```
    tick **Enabled**, click **+**, then **Save and Close**.
 3. Type `/xlplugins` → **All Plugins** → search for **Konnyaku Jelly** → **Install**.
@@ -104,7 +104,7 @@ These work well in macros, e.g. `/jelly /p Thanks for the run!`.
   - Skip your own messages.
   - Show the original text.
   - Echo translations into game chat (`[KY]`).
-  - Which channels to translate. Shout and Yell are off by default, because busy cities would burn through your quota.
+  - Which channels to translate. Only Party (including cross-world party) and Alliance are on by default. Tick FC, Tells, LS and the others if you want them. Be careful with Shout and Yell: busy cities burn through your quota.
 - **Look**: the blue & white theme (turn it off to use your Dalamud style) and how many lines the log keeps.
 
 ### Tips and troubleshooting
@@ -149,6 +149,6 @@ git tag v0.4.0.0
 git push origin v0.4.0.0
 ```
 
-GitHub Actions builds the plugin, creates the release with `latest.zip`, and updates `repo.json` on `main`, so players get the update in `/xlplugins`.
+GitHub Actions builds the tagged commit, creates the release with `latest.zip`, and updates the Konnyaku Jelly entry in [gnomerock/Gnomod](https://github.com/gnomerock/Gnomod)'s `repo.json`, so the update shows up in `/xlplugins`. This needs a `GNOMOD_TOKEN` secret in this repo that can write to Gnomod.
 
 The tutorial site is `docs/index.html`, served by GitHub Pages from the `docs` folder on `main`.

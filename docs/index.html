@@ -294,7 +294,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space
 
   <section>
     <div class="grid3">
-      <div class="card feature"><div class="emoji">💬</div><h3>Read chat</h3><p>Party, FC, Tells, Linkshells and more are translated into your language as they arrive.</p></div>
+      <div class="card feature"><div class="emoji">💬</div><h3>Read chat</h3><p>Party and Alliance chat is translated into your language as it arrives. Add FC, Tells or Linkshells any time.</p></div>
       <div class="card feature"><div class="emoji">✍️</div><h3>Write chat</h3><p>Type in English, pick a channel, press Enter. It's sent in Japanese.</p></div>
       <div class="card feature"><div class="emoji">🔎</div><h3>Party Finder</h3><p>Right-click any listing to read its description in English.</p></div>
     </div>
@@ -302,12 +302,12 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space
 
   <section id="install">
     <h2><span class="step">1</span>Install the plugin</h2>
-    <p class="sub">You need <a href="https://goatcorp.github.io/">XIVLauncher with Dalamud</a>. Konnyaku Jelly lives in its own plugin repository, so add that first.</p>
+    <p class="sub">You need <a href="https://goatcorp.github.io/">XIVLauncher with Dalamud</a>. Konnyaku Jelly is listed in <a href="https://github.com/gnomerock/Gnomod">Gnomod</a>, gnomerock's plugin repository, so add that first. It also gives you any other Gnomod plugins.</p>
     <div class="two">
       <ol class="steps">
         <li>In game, type <code>/xlsettings</code> and open the <b>Experimental</b> tab.</li>
         <li>Under <b>Custom Plugin Repositories</b>, paste this link:
-          <pre class="code"><code>https://raw.githubusercontent.com/gnomerock/konyakku/main/repo.json</code><button class="copy">Copy</button></pre>
+          <pre class="code"><code>https://raw.githubusercontent.com/gnomerock/Gnomod/main/repo.json</code><button class="copy">Copy</button></pre>
         </li>
         <li>Tick <b>Enabled</b>, click <b>+</b>, then <b>Save and Close</b>.</li>
         <li>Type <code>/xlplugins</code>, go to <b>All Plugins</b>, search for <b>Konnyaku Jelly</b> and click <b>Install</b>.</li>
@@ -401,7 +401,7 @@ codex login   <span class="c"># choose "Sign in with ChatGPT"</span></code><butt
         <li>Messages already in your language are skipped, so they cost nothing.</li>
       </ul>
       <div class="callout tip">
-        <b>Which channels?</b> Say, Party, Alliance, FC, Tells, Novice Network, LS and CWLS are on by default. Shout and Yell are off, because busy cities would burn through your quota. Change them in <b>Settings → Chat</b>.
+        <b>Which channels?</b> Only Party (including cross-world party) and Alliance are on by default, for raiding. Tick FC, Tells, LS or others in <b>Settings → Chat</b> if you want them. Be careful with Shout and Yell: busy cities burn through your quota.
       </div>
     </div>
   </section>

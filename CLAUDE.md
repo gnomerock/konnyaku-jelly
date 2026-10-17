@@ -1,0 +1,74 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+**Konnyaku Jelly** (蒟蒻ゼリー) is a Dalamud plugin for FFXIV that translates in-game chat between English and Japanese using ChatGPT (via a Codex CLI login), the OpenAI API, Claude or Gemini. It is a single C# project, `Konyakku/` (`Dalamud.NET.Sdk`, .NET 10). There are no tests and no linter.
+
+## Commands
+
+```
+dotnet build Konyakku/Konyakku.csproj -c Release   # or `dotnet build -c Release` inside Konyakku/
+```
+
+- Building needs XIVLauncher/Dalamud installed locally. References resolve from `%APPDATA%\XIVLauncher\addon\Hooks\dev`; CI downloads Dalamud into `DALAMUD_HOME` instead.
+- A Release build runs DalamudPackager, which writes `Konyakku/bin/Release/Konyakku/latest.zip` and the generated manifest `Konyakku.json`.
+- To try it in game, add `Konyakku\bin\Release\Konyakku.dll` under `/xlsettings` → Experimental → Dev Plugin Locations.
+
+## Releasing
+
+- Bump `<Version>` in `Konyakku/Konyakku.csproj`, commit and push to `main`, then push a 4-part tag such as `git tag v0.4.3.0 && git push origin v0.4.3.0`.
+- `.github/workflows/release.yml` builds the tagged commit with `-p:Version=<tag>` and creates the GitHub release with `latest.zip`.
+- The plugin list players install from is not in this repo. It's `repo.json` in **gnomerock/Gnomod** (https://raw.githubusercontent.com/gnomerock/Gnomod/main/repo.json), shared by all of gnomerock's plugins. Locally it's checked out at `D:\repo\Gnomod`.
+- After releasing, the workflow checks out Gnomod with the `GNOMOD_TOKEN` secret and updates only the entry whose `InternalName` matches `PLUGIN`. It sets the version, download links, API level and `LastUpdate`, so don't edit those fields by hand. The workflow fails up front if the secret is missing.
+- Descriptive fields in Gnomod's entry (`Name`, `Punchline`, `Description`, `Tags`, `IconUrl`) are not synced from `Konyakku/Konyakku.json`. Change both when editing them.
+
+## Naming
+
+- The display name (`Name` in `Konyakku/Konyakku.json` and Gnomod's `repo.json`, window titles, chat prefixes) is "Konnyaku Jelly".
+- `InternalName`, the assembly, namespaces, the `Konyakku/` folder, the GitHub repo `gnomerock/konyakku` and the `/konyakku` command keep the old spelling on purpose.
+- **Never change `InternalName`.** Dalamud would treat the plugin as new, and existing installs would lose their settings and updates.
+- ImGui window IDs (`###KonyakkuLog`, `###KonyakkuConfig`) must also stay stable, or saved window positions are lost.
+
+## Architecture
+
+- **`Plugin.cs`**: the entry point.
+  - Registers `/konyakku` (toggle window, `config` for settings) and `/jelly` (no args opens the window; `/jelly <text>` translates and copies; `/jelly /p <text>` translates and sends).
+  - Hooks `ChatGui.ChatMessage` and owns the in-memory log (`LogEntry`, under `logLock`).
+  - Incoming chat is filtered in this order: `Enabled` → selected `Channels` → `TranslateOnlyWhenOpen` (skipped while the log window is closed) → own messages → `Language.IsAlreadyIn`, a cheap kana/ASCII check that avoids API calls. Only then does `TranslationService` run.
+- **`Translation/TranslationService.cs`**: the only path to the AI.
+  - Builds the shared system prompt (`Instructions`) and appends the user's `CustomPrompt`.
+  - Wraps text in `<message>` tags, limits concurrency to 3 (`slots`), and caches results under a key of provider + custom prompt + target + text.
+  - The model replies with `SameMarker` when the text is already in the target language, and that is cached as an empty result.
+  - Exposes `LastError` for the UI.
+- **`Translation/Providers.cs`**: one `ITranslationProvider.CompleteAsync(instructions, input)` per backend.
+  - ChatGPT subscription: raw SSE against `chatgpt.com/backend-api/codex/responses` with tokens from `CodexAuth`.
+  - OpenAI: chat completions over `HttpClient`.
+  - Claude: the official `Anthropic` NuGet SDK, effort `Low`, with a check for `refusal` stop reasons.
+  - Gemini: REST over `HttpClient`.
+  - Adding a provider means adding a `ProviderKind`, a model list in `ProviderModels`, the provider class, a case in `TranslationService`'s switch, and a radio button plus fields in `ConfigWindow.DrawProvider`.
+- **`Translation/CodexAuth.cs`**: reads and refreshes `~/.codex/auth.json` and writes the rotated refresh token back, so the user's Codex CLI keeps working.
+- **`Configuration.cs`**: persisted settings.
+  - `Normalize()` runs on every load and doubles as the migration step. It resets models that are no longer offered to the cheapest one (the first entry in each `ProviderModels` list), splits a legacy free-text `SendPrefix` such as `/t Name@World` into the dropdown channel plus `TellTarget`, and runs `Version`-gated one-time migrations (v3 added `DefaultCustomPrompt`).
+  - When a new default has to reach existing users, bump `Version` and add a migration there. Otherwise, saved values override new defaults.
+- **`ChannelNames.cs`**:
+  - `Selectable` is the incoming channel list used by settings and log badges.
+  - `Outgoing` is the list of `(prefix, name)` pairs behind the **To** dropdown.
+  - `Theme.ChannelColor` colours channels by these display names.
+- **`ChatSender.cs`**: sends a line through `UIModule.ProcessChatBoxEntry`, as if the player had typed it. It must run on the framework thread (`Framework.RunOnFrameworkThread`) and trims to 500 bytes.
+- **`PartyFinderTranslator.cs`**:
+  - Caches listing descriptions from `PartyFinderGui.ReceiveListing`.
+  - Adds a **Translate** context-menu item in the `LookingForGroup`/`LookingForGroupDetail` addons. When the cache misses, it reads `AgentLookingForGroup.LastViewedListing`.
+  - Echoes the result into game chat as `[KY PF]`.
+- **`Windows/`**:
+  - `LogWindow` is "the jelly window", with Chat (log plus composer) and Paste tabs.
+  - `ConfigWindow` has the Translator, Languages, Chat and Look tabs.
+  - `Theme` holds the blue/white/red/yellow palette and shared widgets: `PrimaryButton`, `Badge`, and `Tooltip`, which also works on disabled items.
+  - Translations finish on background tasks while the UI reads them from the draw loop. Clipboard writes are queued through `Plugin.CopyToClipboard` and applied in `DrawUi`, because ImGui calls must happen on the draw thread.
+
+## Docs
+
+- `README.md` is the user tutorial, with developer notes at the end.
+- `docs/index.html` is a self-contained GitHub Pages tutorial (https://gnomerock.github.io/konyakku/) served from `main:/docs`. Its in-game windows are HTML/CSS mock-ups, not screenshots.
+- When user-visible behaviour changes (defaults, commands, settings labels), update both.

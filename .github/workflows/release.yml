@@ -7,15 +7,27 @@ on:
 permissions:
   contents: write
 
+env:
+  # Entry in gnomerock/Gnomod's repo.json that this workflow updates.
+  PLUGIN: Konyakku
+
 jobs:
   release:
     runs-on: ubuntu-latest
     env:
       DALAMUD_HOME: ${{ github.workspace }}/dalamud
     steps:
+      - name: Check Gnomod token
+        env:
+          GNOMOD_TOKEN: ${{ secrets.GNOMOD_TOKEN }}
+        run: |
+          if [ -z "$GNOMOD_TOKEN" ]; then
+            echo "::error::GNOMOD_TOKEN secret is missing. Add a token that can write to gnomerock/Gnomod."
+            exit 1
+          fi
+
+      # Build exactly the tagged commit, not whatever is on main.
       - uses: actions/checkout@v5
-        with:
-          ref: main
 
       - uses: actions/setup-dotnet@v5
         with:
@@ -31,24 +43,42 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          dotnet build Konyakku/Konyakku.csproj -c Release -p:Version="$VERSION"
+          dotnet build "$PLUGIN/$PLUGIN.csproj" -c Release -p:Version="$VERSION"
 
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" Konyakku/bin/Release/Konyakku/latest.zip \
+          gh release create "$GITHUB_REF_NAME" "$PLUGIN/bin/Release/$PLUGIN/latest.zip" \
             --title "Konnyaku Jelly $VERSION" --generate-notes
 
-      - name: Update repo.json
+      - uses: actions/checkout@v5
+        with:
+          repository: gnomerock/Gnomod
+          token: ${{ secrets.GNOMOD_TOKEN }}
+          path: gnomod
+
+      - name: Update Gnomod repo.json
         run: |
           URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/latest.zip"
-          API=$(jq '.DalamudApiLevel' Konyakku/bin/Release/Konyakku/Konyakku.json)
-          jq --arg v "$VERSION" --arg url "$URL" --argjson api "$API" \
-            'map(.AssemblyVersion = $v | .DalamudApiLevel = $api
-                 | .DownloadLinkInstall = $url | .DownloadLinkUpdate = $url | .DownloadLinkTesting = $url
-                 | .LastUpdate = (now | floor))' repo.json > repo.tmp && mv repo.tmp repo.json
+          API=$(jq '.DalamudApiLevel' "$PLUGIN/bin/Release/$PLUGIN/$PLUGIN.json")
+          cd gnomod
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "Update repo.json for $GITHUB_REF_NAME"
-          git push origin main
+          # Retry so a release of another plugin pushing at the same time doesn't fail this one.
+          for attempt in 1 2 3; do
+            git pull -q --rebase origin main
+            jq -e --arg name "$PLUGIN" 'any(.[]; .InternalName == $name)' repo.json > /dev/null \
+              || { echo "::error::No $PLUGIN entry in Gnomod repo.json"; exit 1; }
+            jq --arg name "$PLUGIN" --arg v "$VERSION" --arg url "$URL" --argjson api "$API" \
+              'map(if .InternalName == $name then
+                     .AssemblyVersion = $v | .DalamudApiLevel = $api
+                     | .DownloadLinkInstall = $url | .DownloadLinkUpdate = $url | .DownloadLinkTesting = $url
+                     | .LastUpdate = (now | floor)
+                   else . end)' repo.json > repo.tmp && mv repo.tmp repo.json
+            git commit -qam "Update $PLUGIN to $VERSION" || { echo "Nothing to update"; exit 0; }
+            git push -q origin main && exit 0
+            git reset -q --hard origin/main
+          done
+          echo "::error::Could not push to Gnomod after 3 attempts"
+          exit 1
