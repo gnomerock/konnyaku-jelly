@@ -11,6 +11,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Konyakku.PartyFinder;
 using Konyakku.Translation;
 using Konyakku.Windows;
 
@@ -28,12 +29,15 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
     [PluginService] internal static IContextMenu ContextMenu { get; private set; } = null!;
     [PluginService] internal static IPartyFinderGui PartyFinderGui { get; private set; } = null!;
+    [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
 
     private const string MainCommand = "/konyakku";
     private const string TranslateCommand = "/jelly";
+    private const string PartyFinderCommand = "/tazu";
 
     internal Configuration Config { get; }
     internal TranslationService Translator { get; }
+    internal ListingStore Listings { get; }
 
     private readonly WindowSystem windows = new("Konyakku");
     private readonly ConfigWindow configWindow;
@@ -49,6 +53,7 @@ public sealed class Plugin : IDalamudPlugin
         Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Config.Normalize();
         Translator = new TranslationService(Config);
+        Listings = new ListingStore(PartyFinderGui, DataManager);
 
         configWindow = new ConfigWindow(this);
         logWindow = new LogWindow(this);
@@ -59,6 +64,10 @@ public sealed class Plugin : IDalamudPlugin
         CommandManager.AddHandler(MainCommand, new CommandInfo(OnMainCommand)
         {
             HelpMessage = "Toggle the translation window. \"/konyakku config\" opens settings.",
+        });
+        CommandManager.AddHandler(PartyFinderCommand, new CommandInfo(OnPartyFinderCommand)
+        {
+            HelpMessage = "Open the Party Finder page of the Konnyaku Jelly window. \"/tazu filters\" edits filters.",
         });
         CommandManager.AddHandler(TranslateCommand, new CommandInfo(OnTranslateCommand)
         {
@@ -75,12 +84,14 @@ public sealed class Plugin : IDalamudPlugin
     public void Dispose()
     {
         partyFinder.Dispose();
+        Listings.Dispose();
         ChatGui.ChatMessage -= OnChatMessage;
         PluginInterface.UiBuilder.Draw -= DrawUi;
         PluginInterface.UiBuilder.OpenConfigUi -= configWindow.Toggle;
         PluginInterface.UiBuilder.OpenMainUi -= logWindow.Toggle;
         CommandManager.RemoveHandler(MainCommand);
         CommandManager.RemoveHandler(TranslateCommand);
+        CommandManager.RemoveHandler(PartyFinderCommand);
         windows.RemoveAllWindows();
         Translator.Dispose();
     }
@@ -119,9 +130,25 @@ public sealed class Plugin : IDalamudPlugin
 
     private void OnMainCommand(string command, string args)
     {
-        if (args.Trim().Equals("config", StringComparison.OrdinalIgnoreCase)) configWindow.Toggle();
-        else logWindow.Toggle();
+        switch (args.Trim().ToLowerInvariant())
+        {
+            case "config":
+                configWindow.Toggle();
+                break;
+            case "pf":
+                logWindow.Show(LogWindow.Page.Listings);
+                break;
+            case "filters":
+                logWindow.Show(LogWindow.Page.Filters);
+                break;
+            default:
+                logWindow.Toggle();
+                break;
+        }
     }
+
+    private void OnPartyFinderCommand(string command, string args) =>
+        logWindow.Show(args.Trim().Equals("filters", StringComparison.OrdinalIgnoreCase) ? LogWindow.Page.Filters : LogWindow.Page.Listings);
 
     private void OnTranslateCommand(string command, string args)
     {

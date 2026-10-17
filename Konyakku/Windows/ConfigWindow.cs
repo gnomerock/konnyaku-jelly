@@ -50,6 +50,7 @@ internal sealed class ConfigWindow : Window
             if (ImGui.BeginTabItem("  Translator  ")) { changed |= DrawProvider(c); ImGui.EndTabItem(); }
             if (ImGui.BeginTabItem("  Languages  ")) { changed |= DrawLanguages(c); ImGui.EndTabItem(); }
             if (ImGui.BeginTabItem("  Chat  ")) { changed |= DrawChat(c); ImGui.EndTabItem(); }
+            if (ImGui.BeginTabItem("  Party Finder  ")) { changed |= DrawPartyFinder(c); ImGui.EndTabItem(); }
             if (ImGui.BeginTabItem("  Look  ")) { changed |= DrawLook(c); ImGui.EndTabItem(); }
             ImGui.EndTabBar();
         }
@@ -173,6 +174,19 @@ internal sealed class ConfigWindow : Window
             }
             ImGui.EndTable();
         }
+        return changed;
+    }
+
+    private static bool DrawPartyFinder(Configuration c)
+    {
+        var changed = false;
+        Heading("Party Finder");
+        ImGui.TextWrapped("The Party Finder page lists the listings the game has loaded. Make filters on the Filters page.");
+        var minutes = c.ForgetAfterMinutes;
+        ImGui.SetNextItemWidth(FieldWidth);
+        if (ImGui.SliderInt("Forget after (minutes)", ref minutes, 1, 120)) { c.ForgetAfterMinutes = minutes; changed = true; }
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("Listings the game hasn't sent again for this long are dropped. Expired listings are always dropped.");
         return changed;
     }
 

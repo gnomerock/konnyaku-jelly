@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Dalamud.Configuration;
 using Dalamud.Game.Text;
+using Konyakku.PartyFinder;
 
 namespace Konyakku;
 
@@ -31,7 +32,7 @@ public static class ProviderModels
 [Serializable]
 public sealed class Configuration : IPluginConfiguration
 {
-    public int Version { get; set; } = 3;
+    public int Version { get; set; } = 4;
 
     public const string DefaultCustomPrompt = "Used in FFXIV online communication and raiding contexts.";
 
@@ -85,7 +86,16 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Name@World used when <see cref="SendPrefix"/> is a tell.</summary>
     public string TellTarget { get; set; } = string.Empty;
 
-    /// <summary>Moves saved model names that are no longer offered back to the cheapest allowed model.</summary>
+    // Party Finder pages (merged in from Tazunebito Stick)
+    public List<ListingFilter> Filters { get; set; } = [];
+    /// <summary>Index into <see cref="Filters"/> of the filter the Party Finder page uses.</summary>
+    public int ActiveFilter { get; set; }
+    /// <summary>Listings drop out this many minutes after the game last sent them, even if they haven't expired.</summary>
+    public int ForgetAfterMinutes { get; set; } = 15;
+
+    public ListingFilter CurrentFilter() => Filters[ActiveFilter];
+
+    /// <summary>Runs on every load: resets models no longer offered, migrates old settings, seeds starter Party Finder filters.</summary>
     public void Normalize()
     {
         SubscriptionModel = ProviderModels.Allowed(ProviderModels.Subscription, SubscriptionModel);
@@ -97,7 +107,14 @@ public sealed class Configuration : IPluginConfiguration
         NormalizeSendPrefix();
         // Version 3 added a default custom prompt; give it to existing users who never wrote their own.
         if (Version < 3 && string.IsNullOrWhiteSpace(CustomPrompt)) CustomPrompt = DefaultCustomPrompt;
-        Version = 3;
+        if (Filters.Count == 0)
+        {
+            Filters.Add(new ListingFilter { Name = "Everything" });
+            Filters.Add(new ListingFilter { Name = "Room for my job", Jobs = JobMode.MyJob, HidePrivate = true });
+        }
+        ActiveFilter = Math.Clamp(ActiveFilter, 0, Filters.Count - 1);
+        ForgetAfterMinutes = Math.Clamp(ForgetAfterMinutes, 1, 120);
+        Version = 4;
     }
 
     /// <summary>Older versions stored free text such as "/t Name@World"; split it into a dropdown channel and a tell target.</summary>
@@ -121,5 +138,5 @@ public sealed class Configuration : IPluginConfiguration
         SendPrefix = Array.Exists(ChannelNames.Outgoing, c => c.Prefix == prefix) ? prefix : "/p";
     }
 
-    public void Save() =>Plugin.PluginInterface.SavePluginConfig(this);
+    public void Save() => Plugin.PluginInterface.SavePluginConfig(this);
 }

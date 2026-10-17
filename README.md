@@ -9,7 +9,7 @@ Dalamud plugin for FFXIV that translates chat with ChatGPT, Claude or Gemini.
 - **Read chat**: Party and Alliance chat (plus FC, Tells, LS, CWLS … if you turn them on) is translated into your language (default: English) and shown in the Konnyaku Jelly window.
 - **Write chat**: type in your own language, pick a channel from the **To** dropdown, and it goes out translated (default: Japanese).
 - **Paste**: translate any Japanese text you copied, e.g. from a website or a Discord message.
-- **Party Finder**: right-click a listing → **Translate**.
+- **Party Finder**: browse listings in the window, filtered by duty, open slots for your job, item level and more, and translate their descriptions. Or right-click a listing in the game's Party Finder → **Translate**.
 - **Saves tokens**: by default chat is only translated while the window is open.
 - Languages: English and Japanese for now.
 
@@ -59,7 +59,7 @@ Type `/jelly` (or `/konyakku`). Keep this window open while you play: incoming c
 
 The **sidebar** on the left of the window has:
 
-- **Chat** and **Paste**, the two pages. A red dot on Chat means new translations arrived while you were on Paste.
+- The pages: **Chat**, **Paste**, **Party Finder** and **Filters**. A red dot on Chat means new translations arrived while you were on another page.
 - **Translating / Paused** at the bottom, to pause and resume chat translation.
 - **Clear log** and **Settings**.
 - The **«** button at the top collapses the sidebar to icons only, to save space. Click **»** to expand it again.
@@ -86,7 +86,22 @@ Click **Paste** in the sidebar, paste Japanese text (Ctrl+V or the **Paste** but
 
 ### 7. Party Finder
 
-Right-click a listing in the Party Finder (or inside its details window) → **Translate**. The description is shown in English in your game chat, marked `[KY PF]`, and in the Konnyaku Jelly log.
+**In the game's Party Finder:** right-click a listing (or inside its details window) → **Translate**. The description is shown in English in your game chat, marked `[KY PF]`, and in the Konnyaku Jelly log.
+
+**In the jelly window:** click **Party Finder** in the sidebar (or type `/tazu`). It lists the listings the game has loaded, so open the game's Party Finder and browse the categories you care about first. Listings stay after you close it, until they expire.
+
+- Pick a filter from the dropdown at the top. Two come ready: **Everything** and **Room for my job**.
+- Hover a listing for its full description, who's in the party and which jobs each open slot takes.
+- Right-click a listing to **Translate description** (into your "Chat I read" language), copy the leader's `Name@World`, or copy the description.
+- The 🗑 button at the top right forgets every listing collected so far.
+
+Make and edit filters on the **Filters** page (`/tazu filters`). A filter can check:
+
+- **Duty**: categories and specific duties (search by name, e.g. "savage").
+- **Open slots**: any slot, a slot for the job you're on, or a slot for jobs you pick, and a minimum number of open slots. One-player-per-job parties don't count jobs they already have.
+- **Listing conditions**: your item level against the listing's minimum, objective, completion condition, data center wide, one player per job, beginners welcome, and hiding password-protected listings.
+
+Use **+** for a new filter, the copy button to duplicate one, Ctrl+click the trash to delete, and **Use** to show it on the Party Finder page.
 
 ### 8. Commands
 
@@ -97,6 +112,8 @@ Right-click a listing in the Party Finder (or inside its details window) → **T
 | `/jelly /p <text>` | Translate and send to party right away. `/s`, `/fc`, `/a`, `/l1`, `/cwl1`, `/t Name@World` … also work |
 | `/konyakku` | Toggle the window |
 | `/konyakku config` | Open settings |
+| `/tazu` (or `/konyakku pf`) | Open the Party Finder page |
+| `/tazu filters` (or `/konyakku filters`) | Open the Filters page |
 
 These work well in macros, e.g. `/jelly /p Thanks for the run!`.
 
@@ -112,6 +129,7 @@ These work well in macros, e.g. `/jelly /p Thanks for the run!`.
   - Show the original text.
   - Echo translations into game chat (`[KY]`).
   - Which channels to translate. Only Party (including cross-world party) and Alliance are on by default. Tick FC, Tells, LS and the others if you want them. Be careful with Shout and Yell: busy cities burn through your quota.
+- **Party Finder**: how long a listing stays after the game last sent it (default 15 minutes).
 - **Look**: the blue & white theme (turn it off to use your Dalamud style) and how many lines the log keeps.
 
 ### Tips and troubleshooting
