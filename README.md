@@ -4,7 +4,7 @@
 
 Dalamud plugin for FFXIV that translates chat with ChatGPT, Claude or Gemini.
 
-**📖 Illustrated tutorial: https://gnomerock.github.io/konyakku/**
+**📖 Illustrated tutorial: https://gnomerock.github.io/konnyaku-jelly/**
 
 - **Read chat**: Party and Alliance chat (plus FC, Tells, LS, CWLS … if you turn them on) is translated into your language (default: English) and shown in the Konnyaku Jelly window.
 - **Write chat**: type in your own language, pick a channel from the **To** dropdown, and it goes out translated (default: Japanese).

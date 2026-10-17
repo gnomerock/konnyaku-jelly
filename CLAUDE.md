@@ -27,7 +27,7 @@ dotnet build Konyakku/Konyakku.csproj -c Release   # or `dotnet build -c Release
 ## Naming
 
 - The display name (`Name` in `Konyakku/Konyakku.json` and Gnomod's `repo.json`, window titles, chat prefixes) is "Konnyaku Jelly".
-- `InternalName`, the assembly, namespaces, the `Konyakku/` folder, the GitHub repo `gnomerock/konyakku` and the `/konyakku` command keep the old spelling on purpose.
+- `InternalName`, the assembly, namespaces, the `Konyakku/` folder and the `/konyakku` command keep the old spelling on purpose. The GitHub repo is `gnomerock/konnyaku-jelly` (renamed from `konyakku`).
 - **Never change `InternalName`.** Dalamud would treat the plugin as new, and existing installs would lose their settings and updates.
 - ImGui window IDs (`###KonyakkuLog`, `###KonyakkuConfig`) must also stay stable, or saved window positions are lost.
 
@@ -70,5 +70,5 @@ dotnet build Konyakku/Konyakku.csproj -c Release   # or `dotnet build -c Release
 ## Docs
 
 - `README.md` is the user tutorial, with developer notes at the end.
-- `docs/index.html` is a self-contained GitHub Pages tutorial (https://gnomerock.github.io/konyakku/) served from `main:/docs`. Its in-game windows are HTML/CSS mock-ups, not screenshots.
+- `docs/index.html` is a self-contained GitHub Pages tutorial (https://gnomerock.github.io/konnyaku-jelly/) served from `main:/docs`. Its in-game windows are HTML/CSS mock-ups, not screenshots.
 - When user-visible behaviour changes (defaults, commands, settings labels), update both.
