@@ -7,8 +7,8 @@ using Dalamud.Interface.Utility;
 namespace Konyakku.Windows;
 
 /// <summary>
-/// A "Jelly" tab tucked into the left edge of the screen. Only a thin strip shows until the mouse
-/// touches it, then it slides out; clicking it shows or hides the jelly window.
+/// A vertical "Jelly" tab on the left edge of the screen. Clicking it opens the jelly window as a drawer
+/// from the same edge (see <see cref="LogWindow"/>); while the docked window is open it covers the tab.
 /// </summary>
 internal sealed class EdgeTab(Plugin plugin)
 {
@@ -17,27 +17,26 @@ internal sealed class EdgeTab(Plugin plugin)
         ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoBackground |
         ImGuiWindowFlags.NoBringToFrontOnFocus;
 
-    // 0 = tucked away, 1 = fully out.
-    private float reveal;
+    private const string Label = "Jelly";
+
+    // 0 = resting, 1 = hovered; widens the tab a little under the mouse.
+    private float hover;
+
+    /// <summary>Screen Y where the tab starts. The docked window opens at the same height.</summary>
+    public static float Top(ImGuiViewportPtr viewport) => viewport.Pos.Y + viewport.Size.Y * 0.18f;
 
     public void Draw()
     {
-        if (!plugin.Config.ShowEdgeTab) return;
+        var config = plugin.Config;
+        if (!config.ShowEdgeTab) return;
+        var open = plugin.IsMainWindowOpen;
+        if (open && config.DockToEdge) return;
 
         var scale = ImGuiHelpers.GlobalScale;
         var viewport = ImGui.GetMainViewport();
-        var size = new Vector2(92, 34) * scale;
-        var peek = 7 * scale;
-        var top = viewport.Pos.Y + viewport.Size.Y * 0.42f;
+        var size = new Vector2((26 + 6 * hover) * scale, 112 * scale);
 
-        // Hit zone is the visible strip (plus a little slack) while tucked, the whole tab once it's out.
-        var mouse = ImGui.GetIO().MousePos;
-        var reach = reveal > 0.5f ? size.X : peek + 6 * scale;
-        var near = mouse.X >= viewport.Pos.X && mouse.X <= viewport.Pos.X + reach &&
-                   mouse.Y >= top && mouse.Y <= top + size.Y;
-        reveal += ((near ? 1f : 0f) - reveal) * Math.Min(1f, ImGui.GetIO().DeltaTime * 16f);
-
-        ImGui.SetNextWindowPos(new Vector2(viewport.Pos.X - (size.X - peek) * (1 - reveal), top));
+        ImGui.SetNextWindowPos(new Vector2(viewport.Pos.X, Top(viewport)));
         ImGui.SetNextWindowSize(size);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
@@ -47,25 +46,35 @@ internal sealed class EdgeTab(Plugin plugin)
             var pos = ImGui.GetWindowPos();
             var clicked = ImGui.InvisibleButton("##edge", size);
             var hovered = ImGui.IsItemHovered();
-            var open = plugin.IsMainWindowOpen;
+            hover += ((hovered ? 1f : 0f) - hover) * Math.Min(1f, ImGui.GetIO().DeltaTime * 16f);
             var draw = ImGui.GetWindowDrawList();
+            var rounding = 8 * scale;
 
-            draw.AddRectFilled(pos, pos + size, ImGui.GetColorU32(hovered ? Theme.BlueHover : Theme.Blue), 10 * scale, ImDrawFlags.RoundCornersRight);
-            // The strip that peeks out: yellow while the window is open, white while it's hidden.
-            draw.AddRectFilled(pos + new Vector2(size.X - 4 * scale, 0), pos + size,
-                ImGui.GetColorU32(open ? Theme.Yellow : Theme.White), 10 * scale, ImDrawFlags.RoundCornersRight);
+            draw.AddRectFilled(pos, pos + size, ImGui.GetColorU32(hovered ? Theme.BlueHover : Theme.Blue), rounding, ImDrawFlags.RoundCornersRight);
+            // Yellow edge while a floating (undocked) window is open, so the tab shows it will hide it.
+            if (open)
+                draw.AddRectFilled(pos + new Vector2(size.X - 3 * scale, 0), pos + size, ImGui.GetColorU32(Theme.Yellow), rounding, ImDrawFlags.RoundCornersRight);
 
+            var y = pos.Y + 8 * scale;
             using (Plugin.PluginInterface.UiBuilder.IconFontFixedWidthHandle.Push())
             {
                 var glyph = FontAwesomeIcon.Language.ToIconString();
                 var iconSize = ImGui.CalcTextSize(glyph);
-                draw.AddText(pos + new Vector2(12 * scale, (size.Y - iconSize.Y) / 2), ImGui.GetColorU32(Theme.White), glyph);
+                draw.AddText(new Vector2(pos.X + (size.X - iconSize.X) / 2, y), ImGui.GetColorU32(Theme.Yellow), glyph);
+                y += iconSize.Y + 6 * scale;
             }
-            const string label = "Jelly";
-            var labelSize = ImGui.CalcTextSize(label);
-            draw.AddText(pos + new Vector2(38 * scale, (size.Y - labelSize.Y) / 2), ImGui.GetColorU32(Theme.White), label);
 
-            if (hovered) ImGui.SetTooltip(open ? "Hide the Konnyaku Jelly window" : "Show the Konnyaku Jelly window");
+            // ImGui can't rotate text, so the label is stacked one letter per line.
+            var step = ImGui.GetTextLineHeight() * 0.82f;
+            foreach (var ch in Label)
+            {
+                var letter = ch.ToString();
+                var letterSize = ImGui.CalcTextSize(letter);
+                draw.AddText(new Vector2(pos.X + (size.X - letterSize.X) / 2, y), ImGui.GetColorU32(Theme.White), letter);
+                y += step;
+            }
+
+            if (hovered) ImGui.SetTooltip(open ? "Hide Konnyaku Jelly" : "Open Konnyaku Jelly");
             if (clicked) plugin.ToggleMainWindow();
         }
         ImGui.End();

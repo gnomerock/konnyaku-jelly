@@ -26,6 +26,8 @@ internal sealed class LogWindow : Window
     private Page page = Page.Chat;
     private int seenVersion;
     private float sidebarWidth = -1;
+    private float slide = 1;
+    private float lastWidth = 640;
 
     private string pasteInput = string.Empty;
     private string pasteResult = string.Empty;
@@ -39,12 +41,35 @@ internal sealed class LogWindow : Window
         SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(400, 260), MaximumSize = new Vector2(4000, 4000) };
     }
 
-    public override void PreDraw() => themePushed = Theme.Push(plugin.Config.UseTheme);
+    public override void OnOpen() => slide = 0;
+
+    public override void PreDraw()
+    {
+        themePushed = Theme.Push(plugin.Config.UseTheme);
+
+        // Docked: a drawer pinned to the left edge at the Jelly tab's height, sliding in when opened.
+        if (plugin.Config.DockToEdge)
+        {
+            slide = Math.Min(1f, slide + ImGui.GetIO().DeltaTime * 6f);
+            var eased = 1 - MathF.Pow(1 - slide, 3);
+            var viewport = ImGui.GetMainViewport();
+            Position = new Vector2(viewport.Pos.X - lastWidth * (1 - eased), EdgeTab.Top(viewport));
+            PositionCondition = ImGuiCond.Always;
+            Flags |= ImGuiWindowFlags.NoMove;
+        }
+        else if (Position != null)
+        {
+            // Just undocked: leave the window where it is and let it be dragged again.
+            Position = null;
+            Flags &= ~ImGuiWindowFlags.NoMove;
+        }
+    }
 
     public override void PostDraw() => Theme.Pop(themePushed);
 
     public override void Draw()
     {
+        lastWidth = ImGui.GetWindowWidth();
         var config = plugin.Config;
         DrawSidebar(config);
         ImGui.SameLine();

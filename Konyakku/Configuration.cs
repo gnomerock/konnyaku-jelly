@@ -70,8 +70,10 @@ public sealed class Configuration : IPluginConfiguration
     public bool ShowOriginal { get; set; } = true;
     public bool UseTheme { get; set; } = true;
     public bool SidebarCollapsed { get; set; } = false;
-    /// <summary>The slide-out "Jelly" tab on the left edge of the screen that toggles the window.</summary>
+    /// <summary>The vertical "Jelly" tab on the left edge of the screen that opens and hides the window.</summary>
     public bool ShowEdgeTab { get; set; } = true;
+    /// <summary>Open the window as a drawer pinned to the left edge, level with the Jelly tab.</summary>
+    public bool DockToEdge { get; set; } = true;
 
     public bool EchoToGameChat { get; set; } = false;
 

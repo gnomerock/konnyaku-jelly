@@ -206,11 +206,15 @@ th { font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: v
 .mock-nav i { font-style: normal; width: 16px; text-align: center; }
 .mock-side .grow { flex: 1; }
 .mock-split .mock-body { flex: 1; min-width: 0; }
-.edge-demo { position: relative; height: 120px; border-radius: 14px; overflow: hidden; background: linear-gradient(120deg, #3d5a6c, #23384a 60%, #1a2b3a); border: 1px solid var(--border); }
-.edge-tab { position: absolute; left: 0; top: 42px; display: flex; align-items: center; gap: 8px; padding: 7px 16px 7px 12px; background: var(--blue); color: #fff; font: 700 14px Nunito, sans-serif; border-radius: 0 10px 10px 0; box-shadow: inset -4px 0 0 var(--yellow); transform: translateX(calc(-100% + 7px)); transition: transform .25s ease; }
-.edge-demo:hover .edge-tab, .edge-demo:focus-within .edge-tab { transform: none; }
+.edge-demo { position: relative; height: 170px; border-radius: 14px; overflow: hidden; background: linear-gradient(120deg, #3d5a6c, #23384a 60%, #1a2b3a); border: 1px solid var(--border); cursor: pointer; }
+.edge-tab { position: absolute; left: 0; top: 24px; width: 26px; padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 0; background: var(--blue); color: #fff; font: 700 13px/1.05 Nunito, sans-serif; border-radius: 0 8px 8px 0; }
+.edge-tab b { color: var(--yellow); margin-bottom: 4px; }
+.edge-drawer { position: absolute; left: 0; top: 24px; width: 62%; height: 120px; background: rgba(10, 42, 72, .97); border: 1px solid rgba(255, 255, 255, .18); border-left: 0; border-radius: 0 12px 12px 0; transform: translateX(-101%); transition: transform .3s cubic-bezier(.2, .8, .2, 1); color: #fff; font: 13px Nunito, sans-serif; overflow: hidden; }
+.edge-drawer .bar { background: var(--blue); padding: 4px 10px; font-weight: 700; display: flex; justify-content: space-between; }
+.edge-drawer .in { padding: 8px 10px; color: var(--soft); }
+.edge-demo:hover .edge-drawer, .edge-demo:focus-within .edge-drawer { transform: none; }
 .edge-hint { position: absolute; right: 14px; bottom: 10px; color: #c9dbe8; font-size: 13px; }
-@media (prefers-reduced-motion: reduce) { .edge-tab { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .edge-drawer { transition: none; } }
 .mock-tab { padding: 3px 14px; border-radius: 8px 8px 0 0; background: var(--blue-deep); }
 .mock-tab.on { background: var(--blue); }
 .mock-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -407,11 +411,12 @@ codex login   <span class="c"># choose "Sign in with ChatGPT"</span></code><butt
           <li><b>Translating / Paused</b> at the bottom pauses and resumes chat translation. <b>Clear log</b> and <b>Settings</b> sit below it.</li>
           <li>Click <b>«</b> to collapse the sidebar to icons when you want more room, and <b>»</b> to expand it.</li>
         </ul>
-        <h3>Quick toggle from the screen edge</h3>
-        <p>Move your mouse to the <b>left edge of the screen</b>. A small <b>Jelly</b> tab slides out. Click it to show or hide the window. Its edge is yellow while the window is open. You can turn it off in <b>Settings → Look</b>.</p>
-        <div class="edge-demo" tabindex="0" aria-label="Demo: hover to slide out the Jelly tab">
-          <span class="edge-tab">文A Jelly</span>
-          <span class="edge-hint">← hover the left edge</span>
+        <h3>The Jelly tab</h3>
+        <p>A small vertical <b>Jelly</b> tab sits on the <b>left edge of the screen</b>. Click it and the window slides out from that edge like a drawer. Close the window (✕) and the tab comes back. In <b>Settings → Look</b> you can turn the tab off, or turn off the drawer so the window can be moved anywhere.</p>
+        <div class="edge-demo" tabindex="0" aria-label="Demo: the Jelly tab opens the window as a drawer">
+          <span class="edge-tab"><b>文A</b>J<br>e<br>l<br>l<br>y</span>
+          <div class="edge-drawer"><div class="bar"><span>Konnyaku Jelly</span><span>✕</span></div><div class="in">Chat · translated into English…</div></div>
+          <span class="edge-hint">hover to try it</span>
         </div>
         <div class="callout">
           <b>Keep the window open while you play.</b> To save tokens, chat is only translated while the window is open. Turn this off in <b>Settings → Chat</b> if you want everything translated all the time.

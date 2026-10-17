@@ -185,7 +185,10 @@ internal sealed class ConfigWindow : Window
         ImGuiComponents.HelpMarker("Turn off to use your normal Dalamud style.");
         changed |= Checkbox("Jelly tab on the left edge of the screen", c.ShowEdgeTab, v => c.ShowEdgeTab = v);
         ImGui.SameLine();
-        ImGuiComponents.HelpMarker("Move the mouse to the left edge of the screen to slide it out, then click it to show or hide the Konnyaku Jelly window.");
+        ImGuiComponents.HelpMarker("A small vertical tab on the left edge of the screen. Click it to open or hide the Konnyaku Jelly window.");
+        changed |= Checkbox("Open the window as a drawer from the left edge", c.DockToEdge, v => c.DockToEdge = v);
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("The window slides out from the left edge, level with the Jelly tab. Turn off to move the window anywhere.");
         var max = c.MaxLogEntries;
         ImGui.SetNextItemWidth(FieldWidth);
         if (ImGui.SliderInt("Lines kept in the log", ref max, 50, 1000)) { c.MaxLogEntries = max; changed = true; }

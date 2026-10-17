@@ -63,7 +63,7 @@ dotnet build Konyakku/Konyakku.csproj -c Release   # or `dotnet build -c Release
   - Echoes the result into game chat as `[KY PF]`.
 - **`Windows/`**:
   - `LogWindow` is "the jelly window". A collapsible sidebar (`NavItem` rows, eased width, `Config.SidebarCollapsed`) switches between the Chat page (log plus composer) and the Paste page, and holds Pause/Resume, Clear log and Settings. The unread dot and auto-scroll compare against `Plugin.LogVersion`, because the log's length stops changing once it's full.
-  - `EdgeTab` is not a `Window`. It's drawn every frame from `Plugin.DrawUi`: a borderless "Jelly" tab parked mostly off-screen at the left edge, which slides out when the mouse reaches it and toggles `LogWindow` on click (`Config.ShowEdgeTab`).
+  - `EdgeTab` is not a `Window`. It's drawn every frame from `Plugin.DrawUi`: an always-visible vertical "Jelly" tab on the left screen edge at `EdgeTab.Top()`, which toggles `LogWindow` (`Config.ShowEdgeTab`). With `Config.DockToEdge` on, `LogWindow.PreDraw` pins the window to the left edge at that same height as a drawer (`NoMove`, slides in on `OnOpen`), and the tab hides while the window covers it.
   - `ConfigWindow` has the Translator, Languages, Chat and Look tabs.
   - `Theme` holds the blue/white/red/yellow palette and shared widgets: `PrimaryButton`, `Badge`, and `Tooltip`, which also works on disabled items.
   - Translations finish on background tasks while the UI reads them from the draw loop. Clipboard writes are queued through `Plugin.CopyToClipboard` and applied in `DrawUi`, because ImGui calls must happen on the draw thread.

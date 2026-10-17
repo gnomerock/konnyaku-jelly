@@ -55,7 +55,7 @@ Click **Test connection**. You should see `It works! → ありがとう…`.
 
 Type `/jelly` (or `/konyakku`). Keep this window open while you play: incoming chat is only translated while it's open, so you don't pay for chat you never read. You can turn that off in **Settings → Chat**.
 
-**Quick toggle:** move your mouse to the **left edge of the screen**. A small **Jelly** tab slides out; click it to show or hide the window. Its edge is yellow while the window is open. You can turn the tab off in **Settings → Look**.
+**Jelly tab:** a small vertical **Jelly** tab sits on the **left edge of the screen**. Click it and the window slides out from that edge like a drawer, covering the tab. Close the window (✕) and the tab comes back. In **Settings → Look** you can turn the tab off, or turn off the drawer so the window can be moved anywhere.
 
 The **sidebar** on the left of the window has:
 
