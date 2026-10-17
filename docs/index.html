@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Konnyaku Jelly</title>
+<meta name="description" content="How to install and use Konnyaku Jelly, a Dalamud plugin that translates FFXIV chat with ChatGPT, Claude or Gemini.">
+<link rel="icon" href="icon.png">
+<meta property="og:title" content="Konnyaku Jelly">
+<meta property="og:description" content="Translate FFXIV chat with ChatGPT, Claude or Gemini. Install and usage tutorial.">
+<meta property="og:image" content="https://gnomerock.github.io/konyakku/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue: #0096e0;
+  --blue-deep: #08467a;
+  --night: #0a2a48;
+  --red: #e21e28;
+  --yellow: #ffd200;
+  --soft: #aacdeb;
+  --ok: #78e68c;
+
+  --bg: #f4f9fd;
+  --surface: #ffffff;
+  --surface-2: #e8f3fb;
+  --text: #0a2340;
+  --muted: #4c6680;
+  --border: #d3e4f1;
+  --accent: #0078be;
+  --code-bg: #0a2a48;
+  --code-text: #e8f4ff;
+  --shadow: 0 10px 30px rgba(8, 70, 122, .12);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #071b2e;
+    --surface: #0c2640;
+    --surface-2: #10304f;
+    --text: #eaf4ff;
+    --muted: #9db8d2;
+    --border: #1d4266;
+    --accent: #4cc0ff;
+    --code-bg: #04121f;
+    --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #071b2e;
+  --surface: #0c2640;
+  --surface-2: #10304f;
+  --text: #eaf4ff;
+  --muted: #9db8d2;
+  --border: #1d4266;
+  --accent: #4cc0ff;
+  --code-bg: #04121f;
+  --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 17px/1.65 Nunito, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); }
+code, pre, kbd { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: .88em; }
+:not(pre) > code {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: .1em .4em;
+  border-radius: 6px;
+}
+kbd {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom-width: 3px;
+  border-radius: 6px;
+  padding: 0 .4em;
+}
+
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+
+/* Header */
+.nav {
+  position: sticky; top: 0; z-index: 10;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.nav .wrap { display: flex; align-items: center; gap: 16px; height: 58px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; text-decoration: none; color: var(--text); white-space: nowrap; }
+.brand img { width: 32px; height: 32px; border-radius: 8px; }
+.nav-links { display: flex; gap: 18px; margin-left: auto; overflow-x: auto; scrollbar-width: none; }
+.nav-links a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: 15px; white-space: nowrap; }
+.nav-links a:hover { color: var(--accent); }
+.theme-btn {
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border-radius: 999px; width: 36px; height: 36px; cursor: pointer; flex: none; font-size: 16px;
+}
+
+/* Hero */
+.hero {
+  background: linear-gradient(160deg, var(--night) 0%, var(--blue-deep) 60%, #0b5d9c 100%);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 6px;
+  background: linear-gradient(90deg, var(--blue) 0 33%, #fff 33% 66%, var(--red) 66% 100%);
+}
+.hero .wrap { display: grid; grid-template-columns: 1.2fr .8fr; gap: 40px; align-items: center; padding-top: 64px; padding-bottom: 72px; }
+.hero h1 { font-size: clamp(38px, 6vw, 60px); line-height: 1.05; margin: 0 0 8px; letter-spacing: -.02em; }
+.hero h1 .jp { display: block; font-size: .38em; color: var(--yellow); letter-spacing: .1em; margin-bottom: 10px; }
+.hero p.lead { font-size: 20px; color: #d6eaff; margin: 0 0 28px; max-width: 34ch; }
+.hero-icon { width: 100%; max-width: 300px; justify-self: center; border-radius: 22%; box-shadow: 0 30px 60px rgba(0, 0, 0, .4); animation: wobble 6s ease-in-out infinite; }
+@keyframes wobble { 0%, 100% { transform: rotate(-2deg) scale(1); } 50% { transform: rotate(2deg) scale(1.03, .97); } }
+@media (prefers-reduced-motion: reduce) { .hero-icon { animation: none; } }
+.btns { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 22px; border-radius: 12px; font-weight: 800; text-decoration: none; font-size: 16px;
+  border: 0; cursor: pointer;
+}
+.btn.primary { background: var(--red); color: #fff; box-shadow: 0 6px 0 #a5121a; }
+.btn.primary:hover { background: #f5464b; }
+.btn.ghost { background: rgba(255, 255, 255, .12); color: #fff; border: 1px solid rgba(255, 255, 255, .3); }
+.btn.ghost:hover { background: rgba(255, 255, 255, .2); }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+.pill { font-size: 14px; font-weight: 700; padding: 4px 12px; border-radius: 999px; background: rgba(255, 255, 255, .12); color: #e3f1ff; }
+
+/* Sections */
+section { padding: 56px 0 8px; scroll-margin-top: 60px; }
+h2 { font-size: 30px; line-height: 1.2; margin: 0 0 6px; display: flex; align-items: center; gap: 14px; letter-spacing: -.01em; }
+.step {
+  flex: none; display: inline-grid; place-items: center;
+  width: 42px; height: 42px; border-radius: 12px;
+  background: var(--yellow); color: var(--night); font-size: 20px; font-weight: 800;
+}
+h3 { font-size: 20px; margin: 28px 0 6px; }
+.sub { color: var(--muted); margin: 0 0 22px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+ol.steps { padding-left: 0; list-style: none; counter-reset: s; margin: 0; }
+ol.steps > li { counter-increment: s; position: relative; padding-left: 42px; margin-bottom: 16px; }
+ol.steps > li::before {
+  content: counter(s); position: absolute; left: 0; top: 1px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--blue); color: #fff; font-weight: 800; font-size: 14px;
+  display: grid; place-items: center;
+}
+
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 22px; box-shadow: var(--shadow);
+}
+.callout {
+  border-left: 5px solid var(--yellow); background: var(--surface-2);
+  padding: 14px 18px; border-radius: 0 12px 12px 0; margin: 18px 0;
+}
+.callout.tip { border-color: var(--blue); }
+
+pre.code {
+  position: relative; background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 12px; overflow-x: auto; margin: 12px 0;
+  max-width: 100%;
+}
+pre.code:has(.copy) { padding-right: 76px; }
+pre.code code { white-space: pre-wrap; word-break: break-all; }
+.hero .wrap > *, .two > *, .grid3 > * { min-width: 0; }
+pre.code .c { color: #7fa6c8; }
+.copy {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255, 255, 255, .12); color: #fff; border: 0; border-radius: 8px;
+  padding: 4px 10px; font: 600 13px Nunito, sans-serif; cursor: pointer;
+}
+.copy:hover { background: rgba(255, 255, 255, .22); }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.table-wrap tr:last-child td { border-bottom: 0; }
+
+/* Mock in-game windows (always the plugin's dark theme, like in game) */
+.mock {
+  background: rgba(10, 42, 72, .97); color: #fff; border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, .18); overflow: hidden;
+  font: 14px/1.5 Nunito, sans-serif; box-shadow: 0 18px 40px rgba(0, 0, 0, .3);
+}
+.mock-title { background: var(--blue); padding: 6px 12px; font-weight: 700; display: flex; justify-content: space-between; }
+.mock-title span:last-child { opacity: .8; }
+.mock-body { padding: 10px 12px 12px; }
+.mock-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.mock-tab { padding: 3px 14px; border-radius: 8px 8px 0 0; background: var(--blue-deep); }
+.mock-tab.on { background: var(--blue); }
+.mock-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.mock-check { width: 16px; height: 16px; border-radius: 4px; background: rgba(255, 255, 255, .1); display: grid; place-items: center; color: var(--yellow); font-size: 12px; }
+.mock-ok { color: var(--ok); }
+.mock-icons { margin-left: auto; display: flex; gap: 4px; }
+.mock-icons span { width: 24px; height: 24px; border-radius: 8px; background: var(--blue); display: grid; place-items: center; font-size: 12px; }
+.mock-log { background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .18); border-radius: 10px; padding: 8px 10px; }
+.mock-line { margin-bottom: 8px; }
+.mock-line:last-child { margin-bottom: 0; }
+.badge { display: inline-block; padding: 0 6px; border-radius: 6px; color: #0a233c; font-size: 12px; font-weight: 700; }
+.who { color: var(--soft); margin: 0 4px; }
+.who.me { color: var(--yellow); }
+.time { color: var(--soft); opacity: .8; font-size: 12px; }
+.tr { padding-left: 8px; }
+.orig { padding-left: 8px; color: var(--soft); }
+.mock-field { background: rgba(255, 255, 255, .1); border-radius: 8px; padding: 3px 10px; }
+.mock-field.hint { color: var(--soft); flex: 1; }
+.mock-combo { background: rgba(255, 255, 255, .1); border-radius: 8px; padding: 3px 10px; min-width: 120px; display: flex; justify-content: space-between; gap: 10px; }
+.mock-btn { border-radius: 8px; padding: 3px 10px; font-weight: 700; white-space: nowrap; }
+.mock-btn.red { background: var(--red); }
+.mock-btn.blue { background: var(--blue); }
+.mock-lang { margin-left: auto; color: var(--yellow); }
+.mock-menu { background: #0c3256; border: 1px solid rgba(255, 255, 255, .18); border-radius: 8px; padding: 4px; margin-top: 4px; width: 170px; }
+.mock-menu div { padding: 2px 8px; border-radius: 6px; }
+.mock-menu div.sel { background: rgba(0, 150, 224, .55); }
+.annot { font-size: 14px; color: var(--muted); margin-top: 10px; }
+.ff-menu { background: linear-gradient(#3b3b3b, #232323); color: #eee; border: 1px solid #777; border-radius: 6px; width: 220px; padding: 4px 0; font-size: 14px; }
+.ff-menu div { padding: 3px 14px; }
+.ff-menu .hl { background: linear-gradient(90deg, rgba(255, 210, 0, .35), transparent); }
+.ff-menu .k { color: #ffde73; font-weight: 700; margin-right: 6px; }
+.echo { font-family: "JetBrains Mono", monospace; font-size: 13px; background: rgba(0, 0, 0, .55); color: #eee; padding: 8px 12px; border-radius: 8px; margin-top: 12px; }
+.echo .tag { color: #ffde73; }
+
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.feature h3 { margin-top: 6px; }
+.feature .emoji { font-size: 28px; }
+
+details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; }
+summary { font-weight: 700; cursor: pointer; }
+details p { margin: 8px 0 0; }
+
+footer { margin-top: 64px; padding: 28px 0 40px; border-top: 1px solid var(--border); color: var(--muted); font-size: 15px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
+
+@media (max-width: 760px) {
+  body { font-size: 16px; }
+  .wrap { padding: 0 16px; }
+  .hero .wrap { grid-template-columns: 1fr; padding-top: 40px; padding-bottom: 52px; }
+  .hero-icon { max-width: 180px; grid-row: 1; justify-self: start; }
+  .two, .grid3 { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+  .theme-btn { margin-left: auto; }
+  h2 { font-size: 25px; }
+  .mock-row.wrap-sm { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="#"><img src="icon.png" alt="">Konnyaku Jelly</a>
+    <div class="nav-links">
+      <a href="#install">Install</a>
+      <a href="#translator">Translator</a>
+      <a href="#read">Read</a>
+      <a href="#write">Write</a>
+      <a href="#paste">Paste</a>
+      <a href="#pf">Party Finder</a>
+      <a href="#commands">Commands</a>
+      <a href="#faq">Help</a>
+    </div>
+    <button class="theme-btn" id="themeBtn" aria-label="Switch light or dark mode">◐</button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <h1><span class="jp">蒟蒻ゼリー</span>Konnyaku Jelly</h1>
+      <p class="lead">Chat with Japanese players in FFXIV. Read their messages in English, and reply in Japanese without leaving the game.</p>
+      <div class="btns">
+        <a class="btn primary" href="#install">Get started</a>
+        <a class="btn ghost" href="https://github.com/gnomerock/konyakku">View on GitHub</a>
+      </div>
+      <div class="pills">
+        <span class="pill">ChatGPT</span><span class="pill">Claude</span><span class="pill">Gemini</span><span class="pill">Dalamud plugin</span>
+      </div>
+    </div>
+    <img class="hero-icon" src="icon.png" alt="Konnyaku Jelly icon: a smiling jelly cube with A and あ speech bubbles">
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <div class="grid3">
+      <div class="card feature"><div class="emoji">💬</div><h3>Read chat</h3><p>Party, FC, Tells, Linkshells and more are translated into your language as they arrive.</p></div>
+      <div class="card feature"><div class="emoji">✍️</div><h3>Write chat</h3><p>Type in English, pick a channel, press Enter. It's sent in Japanese.</p></div>
+      <div class="card feature"><div class="emoji">🔎</div><h3>Party Finder</h3><p>Right-click any listing to read its description in English.</p></div>
+    </div>
+  </section>
+
+  <section id="install">
+    <h2><span class="step">1</span>Install the plugin</h2>
+    <p class="sub">You need <a href="https://goatcorp.github.io/">XIVLauncher with Dalamud</a>. Konnyaku Jelly lives in its own plugin repository, so add that first.</p>
+    <div class="two">
+      <ol class="steps">
+        <li>In game, type <code>/xlsettings</code> and open the <b>Experimental</b> tab.</li>
+        <li>Under <b>Custom Plugin Repositories</b>, paste this link:
+          <pre class="code"><code>https://raw.githubusercontent.com/gnomerock/konyakku/main/repo.json</code><button class="copy">Copy</button></pre>
+        </li>
+        <li>Tick <b>Enabled</b>, click <b>+</b>, then <b>Save and Close</b>.</li>
+        <li>Type <code>/xlplugins</code>, go to <b>All Plugins</b>, search for <b>Konnyaku Jelly</b> and click <b>Install</b>.</li>
+      </ol>
+      <div class="callout tip">
+        <b>Updates are automatic.</b> Once the repository is added, Dalamud offers new versions in <code>/xlplugins</code> like any other plugin.
+      </div>
+    </div>
+  </section>
+
+  <section id="translator">
+    <h2><span class="step">2</span>Choose who translates</h2>
+    <p class="sub">Open settings with <code>/konyakku config</code>, or click the ⚙ button in the window. Pick one option on the <b>Translator</b> tab.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Option</th><th>You need</th><th>Cost</th></tr></thead>
+        <tbody>
+          <tr><td><b>ChatGPT subscription</b> <small>(default)</small></td><td>ChatGPT Plus or Pro, logged in with Codex CLI</td><td>No extra cost, uses your plan</td></tr>
+          <tr><td><b>OpenAI API key</b></td><td>A key from <a href="https://platform.openai.com/api-keys">platform.openai.com</a></td><td>Pay per use</td></tr>
+          <tr><td><b>Claude API key</b></td><td>A key from <a href="https://console.anthropic.com/">console.anthropic.com</a></td><td>Pay per use</td></tr>
+          <tr><td><b>Gemini API key</b></td><td>A key from <a href="https://aistudio.google.com/apikey">Google AI Studio</a></td><td>Pay per use</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="two">
+      <div>
+        <h3>Using your ChatGPT subscription</h3>
+        <p>Install <a href="https://nodejs.org">Node.js</a>, then run this once in a terminal (PowerShell is fine):</p>
+        <pre class="code"><code>npm i -g @openai/codex
+codex login   <span class="c"># choose "Sign in with ChatGPT"</span></code><button class="copy">Copy</button></pre>
+        <p>The settings window then shows <b>"ChatGPT login found. You're good to go!"</b></p>
+      </div>
+      <div>
+        <h3>Using an API key</h3>
+        <p>Paste your key into the <b>API key</b> box. Models are listed cheapest first. The cheapest one is chosen for you and is plenty for chat.</p>
+        <h3>Check it works</h3>
+        <p>Click <b>Test connection</b>. You should see:</p>
+        <div class="mock"><div class="mock-body"><span class="mock-ok">It works! → ランありがとう、gg！またね o/</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="window">
+    <h2><span class="step">3</span>Open the window</h2>
+    <p class="sub">Type <code>/jelly</code>. This is where everything happens.</p>
+    <div class="two">
+      <div class="mock" aria-label="The Konnyaku Jelly window">
+        <div class="mock-title"><span>Konnyaku Jelly</span><span>✕</span></div>
+        <div class="mock-body">
+          <div class="mock-tabs"><span class="mock-tab on">Chat</span><span class="mock-tab">Paste</span></div>
+          <div class="mock-row"><span class="mock-check">✓</span><span class="mock-ok">Translating chat → English</span><span class="mock-icons"><span>🗑</span><span>⚙</span></span></div>
+          <div class="mock-log">
+            <div class="mock-line">
+              <span class="badge" style="background:#78cdff">Party</span><span class="who">Mochi Mochi</span><span class="time">21:04</span>
+              <div class="tr">Thanks for inviting me! First time here, so please go easy on me.</div>
+              <div class="orig">誘ってくれてありがとう！初見なのでお手柔らかに</div>
+            </div>
+            <div class="mock-line">
+              <span class="badge" style="background:#ff9696">Party</span><span class="who me">me</span><span class="time">21:05</span>
+              <div class="tr">よろしくお願いします！ゆっくり行きましょう</div>
+              <div class="orig">Nice to meet you! Let's take it slow</div>
+            </div>
+          </div>
+          <div class="mock-row" style="margin-top:10px"><span class="time">To</span><span class="mock-combo"><span style="color:#78cdff">Party</span><span>▾</span></span><span class="mock-lang">in Japanese</span></div>
+          <div class="mock-row" style="margin-bottom:0"><span class="mock-field hint">Message to Party…</span><span class="mock-btn red">Send</span><span class="mock-btn blue">Copy</span></div>
+        </div>
+      </div>
+      <div>
+        <ul>
+          <li><b>The checkbox</b> at the top left pauses and resumes chat translation.</li>
+          <li><b>🗑</b> clears the log. <b>⚙</b> opens settings.</li>
+          <li>The <b>Chat</b> tab shows translated chat and has the message box at the bottom.</li>
+          <li>The <b>Paste</b> tab translates any text you copy.</li>
+        </ul>
+        <div class="callout">
+          <b>Keep the window open while you play.</b> To save tokens, chat is only translated while the window is open. Turn this off in <b>Settings → Chat</b> if you want everything translated all the time.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="read">
+    <h2><span class="step">4</span>Read chat</h2>
+    <p class="sub">Messages from the channels you picked appear in the Chat tab, already translated.</p>
+    <div class="two">
+      <ul>
+        <li>Each line shows a coloured <b>channel badge</b>, the sender and the time.</li>
+        <li>The translation is in white, and the <b>original</b> is underneath in blue-grey.</li>
+        <li><b>Right-click</b> a line to copy the translation.</li>
+        <li>Messages already in your language are skipped, so they cost nothing.</li>
+      </ul>
+      <div class="callout tip">
+        <b>Which channels?</b> Say, Party, Alliance, FC, Tells, Novice Network, LS and CWLS are on by default. Shout and Yell are off, because busy cities would burn through your quota. Change them in <b>Settings → Chat</b>.
+      </div>
+    </div>
+  </section>
+
+  <section id="write">
+    <h2><span class="step">5</span>Write chat</h2>
+    <p class="sub">Type in your own language and it goes out translated.</p>
+    <div class="two">
+      <ol class="steps">
+        <li>Pick a channel from the <b>To</b> dropdown. The right side shows which language it will be sent in.</li>
+        <li>For a <b>Tell</b>, also type who it's for, like <code>Mochi Mochi@Tonberry</code>.</li>
+        <li>Type your message and press <kbd>Enter</kbd> or <b>Send</b>.</li>
+        <li>Not sure about it? Click <b>Copy</b> instead. It's translated and copied to your clipboard, but not sent.</li>
+      </ol>
+      <div>
+        <div class="mock">
+          <div class="mock-body">
+            <div class="mock-row wrap-sm"><span class="time">To</span><span class="mock-combo"><span style="color:#ffaae1">Tell</span><span>▾</span></span><span class="mock-field">Mochi Mochi@Tonberry</span></div>
+            <div class="mock-menu">
+              <div style="color:#78cdff">Party</div>
+              <div style="color:#e6ebf0">Say</div>
+              <div style="color:#ffaa5a">Alliance</div>
+              <div style="color:#96e6a0">Free Company</div>
+              <div class="sel" style="color:#ffaae1">Tell</div>
+              <div style="color:#c8f08c">Novice Network</div>
+              <div style="color:#ffe68c">LS1 … CWLS8</div>
+            </div>
+          </div>
+        </div>
+        <p class="annot">Channels in the dropdown are coloured like their badges in the log.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="paste">
+    <h2><span class="step">6</span>Translate pasted text</h2>
+    <p class="sub">For anything outside chat: a Lodestone post, a Discord message, a website.</p>
+    <ol class="steps">
+      <li>Open the <b>Paste</b> tab.</li>
+      <li>Paste the Japanese text with <kbd>Ctrl</kbd>+<kbd>V</kbd>, or click <b>Paste</b>.</li>
+      <li>Click <b>Translate to English</b>. Use <b>Copy</b> to grab the result.</li>
+    </ol>
+  </section>
+
+  <section id="pf">
+    <h2><span class="step">7</span>Party Finder</h2>
+    <p class="sub">Right-click a listing in the Party Finder, or right-click inside its details window, and choose <b>Translate</b>.</p>
+    <div class="two">
+      <div>
+        <div class="ff-menu">
+          <div>View Details</div>
+          <div>Send Tell</div>
+          <div class="hl"><span class="k">K</span>Translate</div>
+          <div>Cancel</div>
+        </div>
+        <div class="echo"><span class="tag">[KY PF]</span> Farming the extreme mount, 1 healer wanted. Beginners welcome!</div>
+      </div>
+      <p>The description is printed in English in your game chat, marked <code>[KY PF]</code>, and also added to the Konnyaku Jelly log.</p>
+    </div>
+  </section>
+
+  <section id="commands">
+    <h2><span class="step">8</span>Commands</h2>
+    <p class="sub">Handy for macros, and for chatting without opening the window.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>/jelly</code></td><td>Open the Konnyaku Jelly window</td></tr>
+          <tr><td><code>/jelly &lt;text&gt;</code></td><td>Translate into your outgoing language and copy it to the clipboard</td></tr>
+          <tr><td><code>/jelly /p &lt;text&gt;</code></td><td>Translate and send to party right away. <code>/s</code>, <code>/fc</code>, <code>/a</code>, <code>/l1</code>, <code>/cwl1</code> and <code>/t Name@World</code> work too</td></tr>
+          <tr><td><code>/konyakku</code></td><td>Show or hide the window</td></tr>
+          <tr><td><code>/konyakku config</code></td><td>Open settings</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Macro example</h3>
+    <pre class="code"><code>/jelly /p Thanks for the run, everyone! See you next time o/</code><button class="copy">Copy</button></pre>
+  </section>
+
+  <section id="settings">
+    <h2><span class="step">9</span>Settings tour</h2>
+    <p class="sub"><code>/konyakku config</code> has four tabs.</p>
+    <div class="two">
+      <div class="card">
+        <h3 style="margin-top:0">Translator</h3>
+        <p>Pick the provider, model and key. <b>Test connection</b> checks it all works.</p>
+        <h3>Languages</h3>
+        <p><b>Chat I read</b> and <b>Messages I send</b>. Use the <b>Custom prompt</b> to add your own rules, for example:</p>
+        <pre class="code"><code>Keep 'gg' and 'o/' as-is. Use casual Japanese.</code></pre>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Chat</h3>
+        <ul>
+          <li>Only translate while the window is open</li>
+          <li>Skip your own messages</li>
+          <li>Show the original text</li>
+          <li>Also echo translations into game chat (<code>[KY]</code>)</li>
+          <li>Which channels to translate</li>
+        </ul>
+        <h3>Look</h3>
+        <p>The blue &amp; white theme (turn it off to use your Dalamud style) and how many lines the log keeps.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <h2><span class="step">?</span>Help</h2>
+    <p class="sub">Most problems are one of these.</p>
+    <details>
+      <summary>The window says "Something went wrong"</summary>
+      <p>Open settings and click <b>Test connection</b> to see the full error. With the ChatGPT subscription, run <code>codex login</code> again. With an API key, check the key and that your account has credit.</p>
+    </details>
+    <details>
+      <summary>Nothing is being translated</summary>
+      <p>Check that the window is open, that the checkbox at the top of the window is ticked, and that the channel is ticked in <b>Settings → Chat</b>. Messages already in your reading language are skipped on purpose.</p>
+    </details>
+    <details>
+      <summary>How much does it cost with an API key?</summary>
+      <p>Very little. A chat line is a couple of hundred tokens, so a thousand messages costs cents on the cheapest models. To keep it low, leave Shout and Yell off, keep "only translate while the window is open" on, and use the default (cheapest) model. Identical messages are only translated once.</p>
+    </details>
+    <details>
+      <summary>Is my API key safe?</summary>
+      <p>It's stored in plain text in your Dalamud plugin config on your PC, and only sent to the provider you chose. Don't share your config file.</p>
+    </details>
+    <details>
+      <summary>Which languages are supported?</summary>
+      <p>English and Japanese for now.</p>
+    </details>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Konnyaku Jelly · a Dalamud plugin by gnomerock</span>
+    <span><a href="https://github.com/gnomerock/konyakku">GitHub</a> · <a href="https://github.com/gnomerock/konyakku/releases">Releases</a> · <a href="https://github.com/gnomerock/konyakku/issues">Report a problem</a></span>
+  </div>
+</footer>
+
+<script>
+  document.querySelectorAll('.copy').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const text = btn.parentElement.querySelector('code').innerText.replace(/\s+#.*$/gm, '');
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = 'Copied!';
+      } catch {
+        btn.textContent = 'Press Ctrl+C';
+      }
+      setTimeout(() => (btn.textContent = 'Copy'), 1500);
+    });
+  });
+
+  const root = document.documentElement;
+  try {
+    const saved = localStorage.getItem('theme');
+    if (saved) root.dataset.theme = saved;
+  } catch {}
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    const dark = root.dataset.theme
+      ? root.dataset.theme === 'dark'
+      : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('theme', root.dataset.theme); } catch {}
+  });
+</script>
+</body>
+</html>
