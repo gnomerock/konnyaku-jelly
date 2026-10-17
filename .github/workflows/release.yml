@@ -25,6 +25,13 @@ jobs:
             echo "::error::GNOMOD_TOKEN secret is missing. Add a token that can write to gnomerock/Gnomod."
             exit 1
           fi
+          # Gnomod is public, so reading proves nothing. Ask for push access before building or publishing.
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' -u "x-access-token:$GNOMOD_TOKEN" \
+            "https://github.com/gnomerock/Gnomod.git/info/refs?service=git-receive-pack")
+          if [ "$CODE" != "200" ]; then
+            echo "::error::GNOMOD_TOKEN cannot push to gnomerock/Gnomod (HTTP $CODE). It needs Repository access to Gnomod and Contents: Read and write."
+            exit 1
+          fi
 
       # Build exactly the tagged commit, not whatever is on main.
       - uses: actions/checkout@v5
