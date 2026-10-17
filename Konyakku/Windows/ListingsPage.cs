@@ -8,6 +8,7 @@ using Dalamud.Game.Gui.PartyFinder.Types;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Konyakku.PartyFinder;
+using Konyakku.Translation;
 
 namespace Konyakku.Windows;
 
@@ -180,7 +181,7 @@ internal sealed class ListingsPage(Plugin plugin, Action editFilters)
         {
             try
             {
-                var result = await plugin.Translator.TranslateAsync(l.Description, target);
+                var result = await plugin.Translator.TranslateAsync(l.Description, target, new Received(true, l.Leader));
                 translations[l.Id] = result ?? string.Empty;
                 if (result != null) plugin.AddLog(new LogEntry(DateTime.Now, "PF", l.Leader, l.Description, result, false));
             }

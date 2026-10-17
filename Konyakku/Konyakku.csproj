@@ -1,6 +1,6 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
-    <Version>0.6.0.0</Version>
+    <Version>0.7.0.0</Version>
     <Description>real-time FFXIV chat translation powered by ChatGPT, Claude or Gemini.</Description>
     <IsPackable>false</IsPackable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -11,5 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="images\icon.png" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The shared glossary, built in as a fallback for when GitHub can't be reached. -->
+    <EmbeddedResource Include="..\glossary.json" LogicalName="Konyakku.glossary.json" />
   </ItemGroup>
 </Project>

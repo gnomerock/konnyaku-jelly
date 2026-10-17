@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Dalamud.Configuration;
 using Dalamud.Game.Text;
 using Konyakku.PartyFinder;
+using Konyakku.Translation;
 
 namespace Konyakku;
 
@@ -81,6 +82,15 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Only translate incoming chat while the Konnyaku Jelly window is open, to save tokens.</summary>
     public bool TranslateOnlyWhenOpen { get; set; } = true;
 
+    /// <summary>Opt-in: keep FFXIV words the AI spots in received Japanese chat (public channels only) in a local list.</summary>
+    public bool CollectTerms { get; set; } = false;
+
+    /// <summary>Random ID sent with shared words, so the server counts each player once. Not linked to the character or account.</summary>
+    public string InstallId { get; set; } = string.Empty;
+
+    /// <summary>The player's own glossary words. They replace shared glossary entries with the same Japanese.</summary>
+    public List<GlossaryTerm> MyTerms { get; set; } = [];
+
     public int MaxLogEntries { get; set; } = 300;
     public string SendPrefix { get; set; } = "/p";
     /// <summary>Name@World used when <see cref="SendPrefix"/> is a tell.</summary>
@@ -102,7 +112,7 @@ public sealed class Configuration : IPluginConfiguration
         ApiModel = ProviderModels.Allowed(ProviderModels.OpenAi, ApiModel);
         ClaudeModel = ProviderModels.Allowed(ProviderModels.Claude, ClaudeModel);
         GeminiModel = ProviderModels.Allowed(ProviderModels.Gemini, GeminiModel);
-        if (Array.IndexOf(Language.All, IncomingTarget) < 0) IncomingTarget = "English";
+        if (Array.IndexOf(Language.Incoming, IncomingTarget) < 0) IncomingTarget = "English";
         if (Array.IndexOf(Language.All, OutgoingTarget) < 0) OutgoingTarget = "Japanese";
         NormalizeSendPrefix();
         // Version 3 added a default custom prompt; give it to existing users who never wrote their own.

@@ -1,0 +1,18 @@
+name = "konnyaku-glossary"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Keep request logs off so player IPs don't end up in Cloudflare's logs.
+[observability]
+enabled = false
+
+[[d1_databases]]
+binding = "DB"
+database_name = "konnyaku-glossary"   # your D1 database's name
+database_id = "70680e0c-49dd-467a-a6da-b88579c5fe29"   # from the dashboard or `npx wrangler d1 list`
+
+# 5 share requests a minute per install ID and per IP.
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }

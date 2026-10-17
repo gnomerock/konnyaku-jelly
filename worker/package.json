@@ -1,0 +1,19 @@
+{
+  "name": "konnyaku-glossary",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:schema": "wrangler d1 execute DB --remote --file=schema.sql",
+    "db:schema:local": "wrangler d1 execute DB --local --file=schema.sql",
+    "seed:build": "node scripts/seed-from-json.mjs",
+    "seed": "wrangler d1 execute DB --remote --file=sql/seed.sql",
+    "seed:local": "wrangler d1 execute DB --local --file=sql/seed.sql",
+    "candidates": "wrangler d1 execute DB --remote --file=sql/candidates.sql",
+    "export": "node scripts/export-glossary.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.151.1"
+  }
+}

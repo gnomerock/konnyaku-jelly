@@ -42,6 +42,15 @@ dotnet build Konyakku/Konyakku.csproj -c Release   # or `dotnet build -c Release
   - Wraps text in `<message>` tags, limits concurrency to 3 (`slots`), and caches results under a key of provider + custom prompt + target + text.
   - The model replies with `SameMarker` when the text is already in the target language, and that is cached as an empty result.
   - Exposes `LastError` for the UI.
+- **`Translation/Glossary.cs`**: the shared glossary plus the player's `Config.MyTerms`.
+  - The source of truth is the D1 `glossary` table, served by the Worker (`Glossary.Server` + `/v1/glossary`). `glossary.json` at the repo root is only the fallback embedded in the DLL. Refresh it with `npm run export` in `worker/` before a release, and don't edit it by hand.
+  - At startup the newer of the built-in copy and `glossary-cache.json` is loaded, then a fresh copy is downloaded in the background and kept if its `version` is higher.
+  - `ShareAsync` posts collected words to `/v1/terms` in batches of 50, with `Config.InstallId` (made on first share). Call it from the draw thread, because it may save the config before its first await.
+  - `BlockFor(text)` returns a `<glossary>` block with only the terms found in the message (longest first, at most 15). It's prepended to the input, not the system prompt, and is part of the cache key.
+- **`Translation/TermCollector.cs`**: the opt-in word list (`Config.CollectTerms`, off by default).
+  - Callers pass `Received` (public channel? + sender) for chat from other players. Only then, for Japanese text, does `TranslationService` append `TermInstructions` and split the `term = meaning` lines after `<<TERMS>>` from the reply.
+  - Filters: public channels only, the term must be in the original, contain Japanese and no Latin letters or digits (character names are Latin-only), and the meaning must not mention the sender's name.
+  - Saved to `collected-terms.json` in the plugin config folder. Words leave the PC only through the Words tab's Share preview, and are then marked `Shared`. Outgoing, Paste and Test connection never pass `Received`.
 - **`Translation/Providers.cs`**: one `ITranslationProvider.CompleteAsync(instructions, input)` per backend.
   - ChatGPT subscription: raw SSE against `chatgpt.com/backend-api/codex/responses` with tokens from `CodexAuth`.
   - OpenAI: chat completions over `HttpClient`.
@@ -70,7 +79,15 @@ dotnet build Konyakku/Konyakku.csproj -c Release   # or `dotnet build -c Release
   - `EdgeTab` is not a `Window`. It's drawn every frame from `Plugin.DrawUi`: an always-visible vertical "Jelly" tab on the left screen edge at `EdgeTab.Top()`, which toggles `LogWindow` (`Config.ShowEdgeTab`). With `Config.DockToEdge` on, `LogWindow.PreDraw` pins the window to the left edge at that same height as a drawer (`NoMove`, slides in on `OnOpen`), and the tab hides while the window covers it.
   - `ConfigWindow` has the Translator, Languages, Chat, Party Finder and Look tabs.
   - `Theme` holds the blue/white/red/yellow palette and shared widgets: `PrimaryButton`, `Badge`, and `Tooltip`, which also works on disabled items.
+  - Dalamud's default font has no Thai, so `Plugin.ChatFont` merges Leelawadee UI or Tahoma from the Windows font folder into it. `LogWindow` and the Words table push it. Thai (`Language.Incoming` only) is never echoed into game chat, because the game's font can't draw it.
   - Translations finish on background tasks while the UI reads them from the draw loop. Clipboard writes are queued through `Plugin.CopyToClipboard` and applied in `DrawUi`, because ImGui calls must happen on the draw thread.
+
+## Glossary Worker
+
+- `worker/` is a Cloudflare Worker (plain JS, wrangler) in front of the D1 database: `POST /v1/terms` takes shared words, `GET /v1/glossary` serves the reviewed glossary in the same format as `glossary.json`. Deploy and review steps are in `worker/README.md`.
+- The plugin must never get a Cloudflare token or talk to D1 directly. Everything goes through the Worker.
+- `clean()` in `worker/src/index.js` repeats `TermCollector.Acceptable`'s rules. Change both together.
+- Don't store IPs or raw install IDs. `reporter` is a SHA-256 of `SALT` + install ID.
 
 ## Docs
 

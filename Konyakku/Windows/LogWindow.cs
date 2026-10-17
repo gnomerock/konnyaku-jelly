@@ -87,6 +87,8 @@ internal sealed class LogWindow : Window
 
         if (ImGui.BeginChild("##page", Vector2.Zero, false))
         {
+            // The default font has no Thai; this one is the default font with Thai merged in.
+            using var font = plugin.ChatFont.Push();
             switch (page)
             {
                 case Page.Chat: DrawChat(config); break;

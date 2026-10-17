@@ -11,7 +11,7 @@ Dalamud plugin for FFXIV that translates chat with ChatGPT, Claude or Gemini.
 - **Paste**: translate any Japanese text you copied, e.g. from a website or a Discord message.
 - **Party Finder**: browse listings in the window, filtered by duty, open slots for your job, item level and more, and translate their descriptions. Or right-click a listing in the game's Party Finder → **Translate**.
 - **Saves tokens**: by default chat is only translated while the window is open.
-- Languages: English and Japanese for now.
+- Languages: English and Japanese both ways. Chat you read can also be translated into Thai. It shows in the Konnyaku Jelly window, not in game chat, because the game's font has no Thai letters.
 
 ---
 
@@ -121,7 +121,7 @@ These work well in macros, e.g. `/jelly /p Thanks for the run!`.
 
 - **Translator**: provider, model and key, and **Test connection**.
 - **Languages**:
-  - **Chat I read** and **Messages I send**.
+  - **Chat I read** (English, Japanese or Thai) and **Messages I send** (English or Japanese).
   - **Custom prompt**: extra instructions added to the built-in FFXIV rules. It starts as `Used in FFXIV online communication and raiding contexts.` You can add your own, e.g. `Keep 'gg' and 'o/' as-is. Use casual Japanese.`
 - **Chat**:
   - Only translate while the window is open.
@@ -130,6 +130,14 @@ These work well in macros, e.g. `/jelly /p Thanks for the run!`.
   - Echo translations into game chat (`[KY]`).
   - Which channels to translate. Only Party (including cross-world party) and Alliance are on by default. Tick FC, Tells, LS and the others if you want them. Be careful with Shout and Yell: busy cities burn through your quota.
 - **Party Finder**: how long a listing stays after the game last sent it (default 15 minutes).
+- **Words**:
+  - **FFXIV glossary**: each Japanese message is sent to the AI with the meanings of the FFXIV words in it (散開 = spread, 消化 = farm …), so slang translates correctly. The shared list is built in and updated from the Konnyaku Jelly glossary server at startup.
+  - **My words**: add your own word and meaning. Yours replaces the shared meaning for the same word.
+- **Collecting words** (also on the Words tab): off by default. If you agree, the plugin keeps a list of FFXIV words (散開, 消化, 野良 …) that the AI spots in Japanese chat you receive, with each word's meaning and how often it was seen.
+  - Words only come from Say, Shout, Yell, Party, Alliance, Novice Network and Party Finder, never from Tells, FC, linkshells or PvP teams.
+  - It never keeps what you type, whole messages, names, worlds, channels or times. Words with Latin letters or digits are dropped, since FFXIV character names only use Latin letters.
+  - The list stays on your PC (`collected-terms.json` in the plugin config folder). You can delete single words, clear the list (hold Ctrl), or **Copy list** as JSON. The **+** button moves a collected word into My words, where your meaning is used from then on.
+  - **Share** sends the ticked words to the shared glossary, after a preview of exactly what will be sent: each word, its meaning, and a random ID for your install, so the server counts each player once. No messages, names, worlds, channels, times or counts are sent, and the server doesn't keep your IP address. Words several players share are reviewed and added to the glossary everyone downloads.
 - **Look**: the blue & white theme (turn it off to use your Dalamud style) and how many lines the log keeps.
 
 ### Tips and troubleshooting

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Dalamud.Bindings.ImGui;
@@ -7,6 +8,7 @@ using Dalamud.Game.Chat;
 using Dalamud.Game.Command;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Interface.ManagedFontAtlas;
 using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
@@ -37,7 +39,11 @@ public sealed class Plugin : IDalamudPlugin
 
     internal Configuration Config { get; }
     internal TranslationService Translator { get; }
+    internal TermCollector Terms { get; }
+    internal Glossary Glossary { get; }
     internal ListingStore Listings { get; }
+    /// <summary>Dalamud's default font with Thai merged in, for the jelly window.</summary>
+    internal IFontHandle ChatFont { get; }
 
     private readonly WindowSystem windows = new("Konyakku");
     private readonly ConfigWindow configWindow;
@@ -52,8 +58,11 @@ public sealed class Plugin : IDalamudPlugin
     {
         Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Config.Normalize();
-        Translator = new TranslationService(Config);
+        Terms = new TermCollector(Config, PluginInterface.GetPluginConfigDirectory());
+        Glossary = new Glossary(Config, PluginInterface.GetPluginConfigDirectory());
+        Translator = new TranslationService(Config, Terms, Glossary);
         Listings = new ListingStore(PartyFinderGui, DataManager);
+        ChatFont = PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(BuildChatFont));
 
         configWindow = new ConfigWindow(this);
         logWindow = new LogWindow(this);
@@ -93,7 +102,22 @@ public sealed class Plugin : IDalamudPlugin
         CommandManager.RemoveHandler(TranslateCommand);
         CommandManager.RemoveHandler(PartyFinderCommand);
         windows.RemoveAllWindows();
+        ChatFont.Dispose();
         Translator.Dispose();
+        Glossary.Dispose();
+    }
+
+    // Thai fonts that ship with Windows. On Wine none may exist, and Thai then shows as "?".
+    private static readonly string[] ThaiFontFiles = ["LeelawUI.ttf", "tahoma.ttf"];
+
+    private static void BuildChatFont(IFontAtlasBuildToolkitPreBuild tk)
+    {
+        var size = PluginInterface.UiBuilder.DefaultFontSpec.SizePx;
+        var font = tk.AddDalamudDefaultFont(size);
+        var fonts = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+        var thai = ThaiFontFiles.Select(f => Path.Combine(fonts, f)).FirstOrDefault(File.Exists);
+        if (thai == null) return;
+        tk.AddFontFromFile(thai, new SafeFontConfig { SizePx = size, MergeFont = font, GlyphRanges = [0x0E00, 0x0E7F, 0] });
     }
 
     /// <summary>Goes up on every new log entry, even once the log is full and its length stops changing.</summary>
@@ -210,11 +234,12 @@ public sealed class Plugin : IDalamudPlugin
     {
         try
         {
-            var result = await Translator.TranslateAsync(text, Config.IncomingTarget);
+            var result = await Translator.TranslateAsync(text, Config.IncomingTarget, new Received(TermCollector.IsPublic(type), sender));
             if (result == null) return;
 
             AddLog(new LogEntry(DateTime.Now, ChannelNames.Short(type), sender, text, result, false));
-            if (Config.EchoToGameChat)
+            // The game's chat font has no Thai letters, so Thai would show as boxes.
+            if (Config.EchoToGameChat && Config.IncomingTarget != "Thai")
             {
                 var se = new SeStringBuilder()
                     .AddUiForeground("[KY] ", 45)
