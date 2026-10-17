@@ -141,6 +141,8 @@ internal static class Theme
         _ => Rgb(255, 230, 140),
     };
 
+    public static Vector4 Fade(Vector4 color, float alpha) => color with { W = alpha };
+
     /// <summary>"Translating", "Translating.", … for busy labels.</summary>
     public static string Dots(string text) => text + new string('.', (int)(ImGui.GetTime() * 3) % 4);
 

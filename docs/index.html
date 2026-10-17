@@ -196,6 +196,21 @@ th { font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: v
 .mock-title span:last-child { opacity: .8; }
 .mock-body { padding: 10px 12px 12px; }
 .mock-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.mock-split { display: flex; }
+.mock-side { flex: none; width: 112px; background: rgba(0, 0, 0, .18); padding: 8px 4px; display: flex; flex-direction: column; gap: 3px; }
+.mock-nav { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 8px; color: var(--soft); position: relative; white-space: nowrap; }
+.mock-nav.on { background: rgba(0, 150, 224, .55); color: #fff; }
+.mock-nav.on::before { content: ""; position: absolute; left: -4px; top: 6px; bottom: 6px; width: 3px; border-radius: 2px; background: var(--yellow); }
+.mock-nav.brand { color: var(--yellow); font-weight: 700; margin-bottom: 6px; }
+.mock-nav.ok { color: var(--ok); }
+.mock-nav i { font-style: normal; width: 16px; text-align: center; }
+.mock-side .grow { flex: 1; }
+.mock-split .mock-body { flex: 1; min-width: 0; }
+.edge-demo { position: relative; height: 120px; border-radius: 14px; overflow: hidden; background: linear-gradient(120deg, #3d5a6c, #23384a 60%, #1a2b3a); border: 1px solid var(--border); }
+.edge-tab { position: absolute; left: 0; top: 42px; display: flex; align-items: center; gap: 8px; padding: 7px 16px 7px 12px; background: var(--blue); color: #fff; font: 700 14px Nunito, sans-serif; border-radius: 0 10px 10px 0; box-shadow: inset -4px 0 0 var(--yellow); transform: translateX(calc(-100% + 7px)); transition: transform .25s ease; }
+.edge-demo:hover .edge-tab, .edge-demo:focus-within .edge-tab { transform: none; }
+.edge-hint { position: absolute; right: 14px; bottom: 10px; color: #c9dbe8; font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .edge-tab { transition: none; } }
 .mock-tab { padding: 3px 14px; border-radius: 8px 8px 0 0; background: var(--blue-deep); }
 .mock-tab.on { background: var(--blue); }
 .mock-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -320,7 +335,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space
 
   <section id="translator">
     <h2><span class="step">2</span>Choose who translates</h2>
-    <p class="sub">Open settings with <code>/konyakku config</code>, or click the ⚙ button in the window. Pick one option on the <b>Translator</b> tab.</p>
+    <p class="sub">Open settings with <code>/konyakku config</code>, or click <b>Settings</b> in the window's sidebar. Pick one option on the <b>Translator</b> tab.</p>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Option</th><th>You need</th><th>Cost</th></tr></thead>
@@ -357,9 +372,18 @@ codex login   <span class="c"># choose "Sign in with ChatGPT"</span></code><butt
     <div class="two">
       <div class="mock" aria-label="The Konnyaku Jelly window">
         <div class="mock-title"><span>Konnyaku Jelly</span><span>✕</span></div>
+        <div class="mock-split">
+        <div class="mock-side" aria-label="Sidebar">
+          <span class="mock-nav brand"><i>«</i>Jelly</span>
+          <span class="mock-nav on"><i>💬</i>Chat</span>
+          <span class="mock-nav"><i>📋</i>Paste</span>
+          <span class="grow"></span>
+          <span class="mock-nav ok"><i>⏸</i>Translating</span>
+          <span class="mock-nav"><i>🗑</i>Clear log</span>
+          <span class="mock-nav"><i>⚙</i>Settings</span>
+        </div>
         <div class="mock-body">
-          <div class="mock-tabs"><span class="mock-tab on">Chat</span><span class="mock-tab">Paste</span></div>
-          <div class="mock-row"><span class="mock-check">✓</span><span class="mock-ok">Translating chat → English</span><span class="mock-icons"><span>🗑</span><span>⚙</span></span></div>
+          <div class="mock-row"><span style="color:var(--yellow)">Chat</span><span class="time">translated into English</span></div>
           <div class="mock-log">
             <div class="mock-line">
               <span class="badge" style="background:#78cdff">Party</span><span class="who">Mochi Mochi</span><span class="time">21:04</span>
@@ -375,14 +399,20 @@ codex login   <span class="c"># choose "Sign in with ChatGPT"</span></code><butt
           <div class="mock-row" style="margin-top:10px"><span class="time">To</span><span class="mock-combo"><span style="color:#78cdff">Party</span><span>▾</span></span><span class="mock-lang">in Japanese</span></div>
           <div class="mock-row" style="margin-bottom:0"><span class="mock-field hint">Message to Party…</span><span class="mock-btn red">Send</span><span class="mock-btn blue">Copy</span></div>
         </div>
+        </div>
       </div>
       <div>
         <ul>
-          <li><b>The checkbox</b> at the top left pauses and resumes chat translation.</li>
-          <li><b>🗑</b> clears the log. <b>⚙</b> opens settings.</li>
-          <li>The <b>Chat</b> tab shows translated chat and has the message box at the bottom.</li>
-          <li>The <b>Paste</b> tab translates any text you copy.</li>
+          <li>The <b>sidebar</b> switches between <b>Chat</b> (translated chat and the message box) and <b>Paste</b> (translate any text you copy). A red dot on Chat means new translations arrived while you were on Paste.</li>
+          <li><b>Translating / Paused</b> at the bottom pauses and resumes chat translation. <b>Clear log</b> and <b>Settings</b> sit below it.</li>
+          <li>Click <b>«</b> to collapse the sidebar to icons when you want more room, and <b>»</b> to expand it.</li>
         </ul>
+        <h3>Quick toggle from the screen edge</h3>
+        <p>Move your mouse to the <b>left edge of the screen</b>. A small <b>Jelly</b> tab slides out. Click it to show or hide the window. Its edge is yellow while the window is open. You can turn it off in <b>Settings → Look</b>.</p>
+        <div class="edge-demo" tabindex="0" aria-label="Demo: hover to slide out the Jelly tab">
+          <span class="edge-tab">文A Jelly</span>
+          <span class="edge-hint">← hover the left edge</span>
+        </div>
         <div class="callout">
           <b>Keep the window open while you play.</b> To save tokens, chat is only translated while the window is open. Turn this off in <b>Settings → Chat</b> if you want everything translated all the time.
         </div>
@@ -392,7 +422,7 @@ codex login   <span class="c"># choose "Sign in with ChatGPT"</span></code><butt
 
   <section id="read">
     <h2><span class="step">4</span>Read chat</h2>
-    <p class="sub">Messages from the channels you picked appear in the Chat tab, already translated.</p>
+    <p class="sub">Messages from the channels you picked appear on the Chat page, already translated.</p>
     <div class="two">
       <ul>
         <li>Each line shows a coloured <b>channel badge</b>, the sender and the time.</li>
@@ -440,7 +470,7 @@ codex login   <span class="c"># choose "Sign in with ChatGPT"</span></code><butt
     <h2><span class="step">6</span>Translate pasted text</h2>
     <p class="sub">For anything outside chat: a Lodestone post, a Discord message, a website.</p>
     <ol class="steps">
-      <li>Open the <b>Paste</b> tab.</li>
+      <li>Click <b>Paste</b> in the sidebar.</li>
       <li>Paste the Japanese text with <kbd>Ctrl</kbd>+<kbd>V</kbd>, or click <b>Paste</b>.</li>
       <li>Click <b>Translate to English</b>. Use <b>Copy</b> to grab the result.</li>
     </ol>

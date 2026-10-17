@@ -38,6 +38,7 @@ public sealed class Plugin : IDalamudPlugin
     private readonly WindowSystem windows = new("Konyakku");
     private readonly ConfigWindow configWindow;
     private readonly LogWindow logWindow;
+    private readonly EdgeTab edgeTab;
     private readonly PartyFinderTranslator partyFinder;
     private readonly object logLock = new();
     private readonly List<LogEntry> log = [];
@@ -53,6 +54,7 @@ public sealed class Plugin : IDalamudPlugin
         logWindow = new LogWindow(this);
         windows.AddWindow(configWindow);
         windows.AddWindow(logWindow);
+        edgeTab = new EdgeTab(this);
 
         CommandManager.AddHandler(MainCommand, new CommandInfo(OnMainCommand)
         {
@@ -83,6 +85,9 @@ public sealed class Plugin : IDalamudPlugin
         Translator.Dispose();
     }
 
+    /// <summary>Goes up on every new log entry, even once the log is full and its length stops changing.</summary>
+    internal int LogVersion { get; private set; }
+
     internal IReadOnlyList<LogEntry> SnapshotLog()
     {
         lock (logLock) return log.ToArray();
@@ -97,6 +102,10 @@ public sealed class Plugin : IDalamudPlugin
 
     internal void OpenConfig() => configWindow.IsOpen = true;
 
+    internal bool IsMainWindowOpen => logWindow.IsOpen;
+
+    internal void ToggleMainWindow() => logWindow.Toggle();
+
     private void DrawUi()
     {
         if (pendingClipboard is { } text)
@@ -105,6 +114,7 @@ public sealed class Plugin : IDalamudPlugin
             pendingClipboard = null;
         }
         windows.Draw();
+        edgeTab.Draw();
     }
 
     private void OnMainCommand(string command, string args)
@@ -199,6 +209,7 @@ public sealed class Plugin : IDalamudPlugin
             log.Add(entry);
             var overflow = log.Count - Math.Max(20, Config.MaxLogEntries);
             if (overflow > 0) log.RemoveRange(0, overflow);
+            LogVersion++;
         }
     }
 }

@@ -29,7 +29,7 @@ Dalamud plugin for FFXIV that translates chat with ChatGPT, Claude or Gemini.
 
 ### 2. Choose who translates
 
-Open the settings with `/konyakku config` (or the cog button in the window). On the **Translator** tab, pick one:
+Open the settings with `/konyakku config` (or **Settings** in the window's sidebar). On the **Translator** tab, pick one:
 
 | Option | What you need | Cost |
 |---|---|---|
@@ -55,18 +55,25 @@ Click **Test connection**. You should see `It works! → ありがとう…`.
 
 Type `/jelly` (or `/konyakku`). Keep this window open while you play: incoming chat is only translated while it's open, so you don't pay for chat you never read. You can turn that off in **Settings → Chat**.
 
-The checkbox at the top left pauses and resumes chat translation. The bin button clears the log.
+**Quick toggle:** move your mouse to the **left edge of the screen**. A small **Jelly** tab slides out; click it to show or hide the window. Its edge is yellow while the window is open. You can turn the tab off in **Settings → Look**.
+
+The **sidebar** on the left of the window has:
+
+- **Chat** and **Paste**, the two pages. A red dot on Chat means new translations arrived while you were on Paste.
+- **Translating / Paused** at the bottom, to pause and resume chat translation.
+- **Clear log** and **Settings**.
+- The **«** button at the top collapses the sidebar to icons only, to save space. Click **»** to expand it again.
 
 ### 4. Read chat
 
-Messages from the channels you picked show up in the **Chat** tab, translated, with a coloured channel badge, the sender and the time. The original text is shown underneath in grey.
+Messages from the channels you picked show up on the **Chat** page, translated, with a coloured channel badge, the sender and the time. The original text is shown underneath in grey.
 
 - **Right-click** a line to copy the translation.
 - Messages already in your language are skipped, so they cost nothing.
 
 ### 5. Write chat
 
-At the bottom of the **Chat** tab:
+At the bottom of the **Chat** page:
 
 1. Pick a channel in the **To** dropdown: Party, Say, Alliance, Free Company, Tell, Novice Network, Shout, Yell, LS1–8, CWLS1–8. The right side shows which language it will be sent in.
 2. For **Tell**, also type who it's for, as `Name@World`.
@@ -75,7 +82,7 @@ At the bottom of the **Chat** tab:
 
 ### 6. Translate pasted text
 
-In the **Paste** tab, paste Japanese text (Ctrl+V or the **Paste** button) and click **Translate to English**. **Copy** puts the result on your clipboard.
+Click **Paste** in the sidebar, paste Japanese text (Ctrl+V or the **Paste** button) and click **Translate to English**. **Copy** puts the result on your clipboard.
 
 ### 7. Party Finder
 

@@ -69,6 +69,9 @@ public sealed class Configuration : IPluginConfiguration
     public bool SkipOwnMessages { get; set; } = true;
     public bool ShowOriginal { get; set; } = true;
     public bool UseTheme { get; set; } = true;
+    public bool SidebarCollapsed { get; set; } = false;
+    /// <summary>The slide-out "Jelly" tab on the left edge of the screen that toggles the window.</summary>
+    public bool ShowEdgeTab { get; set; } = true;
 
     public bool EchoToGameChat { get; set; } = false;
 

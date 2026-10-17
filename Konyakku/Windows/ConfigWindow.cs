@@ -183,6 +183,9 @@ internal sealed class ConfigWindow : Window
         changed |= Checkbox("Blue & white theme", c.UseTheme, v => c.UseTheme = v);
         ImGui.SameLine();
         ImGuiComponents.HelpMarker("Turn off to use your normal Dalamud style.");
+        changed |= Checkbox("Jelly tab on the left edge of the screen", c.ShowEdgeTab, v => c.ShowEdgeTab = v);
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("Move the mouse to the left edge of the screen to slide it out, then click it to show or hide the Konnyaku Jelly window.");
         var max = c.MaxLogEntries;
         ImGui.SetNextItemWidth(FieldWidth);
         if (ImGui.SliderInt("Lines kept in the log", ref max, 50, 1000)) { c.MaxLogEntries = max; changed = true; }

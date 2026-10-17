@@ -1,7 +1,9 @@
+using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 
 namespace Konyakku.Windows;
@@ -10,12 +12,20 @@ namespace Konyakku.Windows;
 internal sealed class LogWindow : Window
 {
     private const string PasteTarget = "English";
+    private const float CollapsedWidth = 44f;
+    private const float ExpandedWidth = 150f;
+
+    private enum Page { Chat, Paste }
 
     private readonly Plugin plugin;
     private string input = string.Empty;
     private bool busy;
-    private int lastCount;
+    private int lastScrolledVersion = -1;
     private bool themePushed;
+
+    private Page page = Page.Chat;
+    private int seenVersion;
+    private float sidebarWidth = -1;
 
     private string pasteInput = string.Empty;
     private string pasteResult = string.Empty;
@@ -24,9 +34,9 @@ internal sealed class LogWindow : Window
     public LogWindow(Plugin plugin) : base("Konnyaku Jelly###KonyakkuLog")
     {
         this.plugin = plugin;
-        Size = new Vector2(520, 380);
+        Size = new Vector2(640, 420);
         SizeCondition = ImGuiCond.FirstUseEver;
-        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(360, 240), MaximumSize = new Vector2(4000, 4000) };
+        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(400, 260), MaximumSize = new Vector2(4000, 4000) };
     }
 
     public override void PreDraw() => themePushed = Theme.Push(plugin.Config.UseTheme);
@@ -35,22 +45,119 @@ internal sealed class LogWindow : Window
 
     public override void Draw()
     {
-        if (!ImGui.BeginTabBar("##tabs")) return;
-        if (ImGui.BeginTabItem("  Chat  "))
+        var config = plugin.Config;
+        DrawSidebar(config);
+        ImGui.SameLine();
+
+        if (ImGui.BeginChild("##page", Vector2.Zero, false))
         {
-            DrawChat(plugin.Config);
-            ImGui.EndTabItem();
+            if (page == Page.Chat) DrawChat(config);
+            else DrawPaste();
         }
-        if (ImGui.BeginTabItem("  Paste  "))
+        ImGui.EndChild();
+    }
+
+    /// <summary>Navigation on the left. Collapses to an icon strip; the width eases between the two sizes.</summary>
+    private void DrawSidebar(Configuration config)
+    {
+        var scale = ImGuiHelpers.GlobalScale;
+        var collapsed = CollapsedWidth * scale;
+        var target = (config.SidebarCollapsed ? CollapsedWidth : ExpandedWidth) * scale;
+        sidebarWidth = sidebarWidth < 0 ? target : sidebarWidth + (target - sidebarWidth) * Math.Min(1f, ImGui.GetIO().DeltaTime * 14f);
+        if (Math.Abs(target - sidebarWidth) < 0.5f) sidebarWidth = target;
+        var showLabels = sidebarWidth > collapsed + 60 * scale;
+
+        ImGui.PushStyleColor(ImGuiCol.ChildBg, new Vector4(0, 0, 0, 0.18f));
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(0, 4 * scale));
+        if (ImGui.BeginChild("##sidebar", new Vector2(sidebarWidth, 0), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
         {
-            DrawPaste();
-            ImGui.EndTabItem();
+            ImGui.Dummy(new Vector2(0, 2 * scale));
+            var toggleTip = config.SidebarCollapsed ? "Expand sidebar" : "Collapse sidebar";
+            if (NavItem("toggle", config.SidebarCollapsed ? FontAwesomeIcon.AngleDoubleRight : FontAwesomeIcon.AngleDoubleLeft,
+                    "Jelly", toggleTip, false, showLabels, labelColor: Theme.Yellow))
+            {
+                config.SidebarCollapsed = !config.SidebarCollapsed;
+                config.Save();
+            }
+
+            ImGui.Dummy(new Vector2(0, 6 * scale));
+            var unread = page != Page.Chat && plugin.LogVersion != seenVersion;
+            if (NavItem("chat", FontAwesomeIcon.Comments, "Chat", "Translated chat and message box", page == Page.Chat, showLabels, badge: unread))
+                page = Page.Chat;
+            if (NavItem("paste", FontAwesomeIcon.Paste, "Paste", "Translate pasted Japanese text", page == Page.Paste, showLabels))
+                page = Page.Paste;
+
+            // Pin the actions to the bottom of the sidebar.
+            var row = ImGui.GetFrameHeight() * 1.3f;
+            var bottom = row * 3 + ImGui.GetStyle().ItemSpacing.Y * 3 + 4 * scale;
+            var y = ImGui.GetWindowHeight() - bottom;
+            if (y > ImGui.GetCursorPosY()) ImGui.SetCursorPosY(y);
+
+            var enabled = config.Enabled;
+            if (NavItem("pause", enabled ? FontAwesomeIcon.Pause : FontAwesomeIcon.Play, enabled ? "Translating" : "Paused",
+                    enabled ? "Pause chat translation" : "Resume chat translation", false, showLabels,
+                    iconColor: enabled ? Theme.Ok : Theme.Warn, labelColor: enabled ? Theme.Ok : Theme.Warn))
+            {
+                config.Enabled = !enabled;
+                config.Save();
+            }
+            if (NavItem("clear", FontAwesomeIcon.TrashAlt, "Clear log", "Clear the chat log", false, showLabels))
+                plugin.ClearLog();
+            if (NavItem("settings", FontAwesomeIcon.Cog, "Settings", "Open settings", false, showLabels))
+                plugin.OpenConfig();
         }
-        ImGui.EndTabBar();
+        ImGui.EndChild();
+        ImGui.PopStyleVar();
+        ImGui.PopStyleColor();
+    }
+
+    /// <summary>A full-width sidebar row: icon in the collapsed strip, label beside it when expanded.</summary>
+    private static bool NavItem(string id, FontAwesomeIcon icon, string label, string tooltip, bool selected, bool showLabel,
+        bool badge = false, Vector4? iconColor = null, Vector4? labelColor = null)
+    {
+        var scale = ImGuiHelpers.GlobalScale;
+        var strip = CollapsedWidth * scale;
+        var size = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight() * 1.3f);
+        var pos = ImGui.GetCursorScreenPos();
+        var clicked = ImGui.InvisibleButton($"##nav-{id}", size);
+        var hovered = ImGui.IsItemHovered();
+        var draw = ImGui.GetWindowDrawList();
+        var inset = new Vector2(4 * scale, 0);
+
+        if (selected)
+        {
+            draw.AddRectFilled(pos + inset, pos + size - inset, ImGui.GetColorU32(Theme.Fade(Theme.Blue, 0.55f)), 8 * scale);
+            draw.AddRectFilled(pos + new Vector2(0, 7 * scale), pos + new Vector2(3 * scale, size.Y - 7 * scale), ImGui.GetColorU32(Theme.Yellow), 2 * scale);
+        }
+        else if (hovered)
+        {
+            draw.AddRectFilled(pos + inset, pos + size - inset, ImGui.GetColorU32(new Vector4(1, 1, 1, 0.08f)), 8 * scale);
+        }
+
+        var text = selected ? Theme.White : hovered ? Theme.White : Theme.Soft;
+        using (Plugin.PluginInterface.UiBuilder.IconFontFixedWidthHandle.Push())
+        {
+            var glyph = icon.ToIconString();
+            var iconSize = ImGui.CalcTextSize(glyph);
+            var iconPos = pos + new Vector2((strip - iconSize.X) / 2, (size.Y - iconSize.Y) / 2);
+            draw.AddText(iconPos, ImGui.GetColorU32(iconColor ?? text), glyph);
+            if (badge)
+                draw.AddCircleFilled(iconPos + new Vector2(iconSize.X + 1 * scale, 1 * scale), 4 * scale, ImGui.GetColorU32(Theme.Red));
+        }
+
+        if (showLabel)
+        {
+            var labelSize = ImGui.CalcTextSize(label);
+            draw.AddText(pos + new Vector2(strip - 2 * scale, (size.Y - labelSize.Y) / 2), ImGui.GetColorU32(labelColor ?? text), label);
+        }
+
+        if (hovered) ImGui.SetTooltip(showLabel ? tooltip : $"{label}: {tooltip}");
+        return clicked;
     }
 
     private void DrawChat(Configuration config)
     {
+        seenVersion = plugin.LogVersion;
         DrawHeader(config);
         DrawError();
 
@@ -81,35 +188,24 @@ internal sealed class LogWindow : Window
                 ImGui.Spacing();
             }
 
-            if (entries.Count != lastCount && ImGui.GetScrollY() >= ImGui.GetScrollMaxY() - 40)
+            // Follow new lines only when already at the bottom, so reading older lines isn't interrupted.
+            if (plugin.LogVersion != lastScrolledVersion && ImGui.GetScrollY() >= ImGui.GetScrollMaxY() - 40)
                 ImGui.SetScrollHereY(1f);
-            lastCount = entries.Count;
+            lastScrolledVersion = plugin.LogVersion;
         }
         ImGui.EndChild();
 
         DrawComposer(config);
     }
 
-    private void DrawHeader(Configuration config)
+    private static void DrawHeader(Configuration config)
     {
-        var enabled = config.Enabled;
-        if (ImGui.Checkbox("##enabled", ref enabled))
-        {
-            config.Enabled = enabled;
-            config.Save();
-        }
-        Theme.Tooltip(enabled ? "Click to pause chat translation" : "Click to resume chat translation");
+        ImGui.TextColored(Theme.Yellow, "Chat");
         ImGui.SameLine();
-        if (enabled)
-            ImGui.TextColored(Theme.Ok, $"Translating chat → {config.IncomingTarget}");
+        if (config.Enabled)
+            ImGui.TextDisabled($"translated into {config.IncomingTarget}");
         else
-            ImGui.TextColored(Theme.Warn, "Paused");
-
-        var buttons = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.X;
-        ImGui.SameLine(ImGui.GetContentRegionMax().X - buttons);
-        if (Theme.IconButton("clear", FontAwesomeIcon.TrashAlt, "Clear the log")) plugin.ClearLog();
-        ImGui.SameLine();
-        if (Theme.IconButton("settings", FontAwesomeIcon.Cog, "Settings")) plugin.OpenConfig();
+            ImGui.TextColored(Theme.Warn, "paused · click Paused in the sidebar to resume");
     }
 
     private void DrawError()
@@ -128,12 +224,12 @@ internal sealed class LogWindow : Window
         ImGui.TextColored(Theme.Yellow, "No translations yet.");
         ImGui.TextWrapped(config.Enabled
             ? "Messages from the channels you picked in Settings will show up here, translated."
-            : "Chat translation is paused. Tick the box above to turn it back on.");
+            : "Chat translation is paused. Click Paused in the sidebar to turn it back on.");
         ImGui.Spacing();
         ImGui.TextDisabled("Tips:");
         ImGui.BulletText("Type below to send a translated message.");
         ImGui.BulletText("Right-click a line to copy it.");
-        ImGui.BulletText("Use the Paste tab for longer Japanese text.");
+        ImGui.BulletText("Use Paste in the sidebar for longer Japanese text.");
     }
 
     private void DrawComposer(Configuration config)
@@ -231,7 +327,7 @@ internal sealed class LogWindow : Window
         var buttonRow = ImGui.GetFrameHeightWithSpacing();
         var boxHeight = (ImGui.GetContentRegionAvail().Y - buttonRow - ImGui.GetTextLineHeightWithSpacing() * 2) / 2;
 
-        ImGui.TextColored(Theme.Yellow, "Japanese");
+        ImGui.TextColored(Theme.Yellow, "Paste · Japanese");
         ImGui.SameLine();
         ImGui.TextDisabled("paste text here (Ctrl+V)");
         ImGui.InputTextMultiline("##pastein", ref pasteInput, 4000, new Vector2(-1, boxHeight));
