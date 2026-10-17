@@ -49,8 +49,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" "$PLUGIN/bin/Release/$PLUGIN/latest.zip" \
-            --title "Konnyaku Jelly $VERSION" --generate-notes
+          ZIP="$PLUGIN/bin/Release/$PLUGIN/latest.zip"
+          # Re-runs (e.g. after fixing GNOMOD_TOKEN) replace the zip instead of failing on the existing release.
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$ZIP" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$ZIP" --title "Konnyaku Jelly $VERSION" --generate-notes
+          fi
 
       - uses: actions/checkout@v5
         with:
