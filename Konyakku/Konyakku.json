@@ -1,6 +1,6 @@
 {
   "Author": "gnomerock",
-  "Name": "Konyakku",
+  "Name": "Konnyaku Jelly",
   "Punchline": "translate FFXIV chat with ChatGPT, Claude or Gemini.",
   "Description": "Translates incoming chat into your language and lets you write messages in your own language, translated before sending. Works with your ChatGPT subscription (via Codex CLI login) or an OpenAI, Claude or Gemini API key.",
   "ApplicableVersion": "any",

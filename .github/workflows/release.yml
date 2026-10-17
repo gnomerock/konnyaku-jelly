@@ -38,7 +38,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" Konyakku/bin/Release/Konyakku/latest.zip \
-            --title "Konyakku $VERSION" --generate-notes
+            --title "Konnyaku Jelly $VERSION" --generate-notes
 
       - name: Update repo.json
         run: |

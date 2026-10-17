@@ -111,7 +111,7 @@ internal static class Theme
 
     public static void Tooltip(string text)
     {
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip(text);
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) ImGui.SetTooltip(text);
     }
 
     /// <summary>A small rounded label, e.g. the chat channel of a log line.</summary>

@@ -21,7 +21,7 @@ internal sealed class LogWindow : Window
     private string pasteResult = string.Empty;
     private bool pasteBusy;
 
-    public LogWindow(Plugin plugin) : base("Konyakku###KonyakkuLog")
+    public LogWindow(Plugin plugin) : base("Konnyaku Jelly###KonyakkuLog")
     {
         this.plugin = plugin;
         Size = new Vector2(520, 380);
@@ -54,7 +54,7 @@ internal sealed class LogWindow : Window
         DrawHeader(config);
         DrawError();
 
-        var footer = ImGui.GetFrameHeightWithSpacing() + ImGui.GetStyle().ItemSpacing.Y;
+        var footer = ImGui.GetFrameHeightWithSpacing() * 2 + ImGui.GetStyle().ItemSpacing.Y;
         if (ImGui.BeginChild("##log", new Vector2(0, -footer), true))
         {
             var entries = plugin.SnapshotLog();
@@ -138,35 +138,36 @@ internal sealed class LogWindow : Window
 
     private void DrawComposer(Configuration config)
     {
-        var prefix = config.SendPrefix;
-        ImGui.SetNextItemWidth(52);
-        if (ImGui.InputText("##prefix", ref prefix, 16))
-        {
-            config.SendPrefix = prefix;
-            config.Save();
-        }
-        Theme.Tooltip("Channel to send to: /p party, /fc free company, /s say, /t Name@World …");
-        ImGui.SameLine();
+        var channel = ChannelNames.OutgoingName(config.SendPrefix);
+        var isTell = config.SendPrefix == ChannelNames.TellPrefix;
+        var tellTarget = config.TellTarget.Trim();
+
+        DrawChannelPicker(config, channel, isTell);
 
         var sendWidth = ImGuiComponents.GetIconButtonWithTextWidth(FontAwesomeIcon.PaperPlane, "Send");
         var copyWidth = ImGuiComponents.GetIconButtonWithTextWidth(FontAwesomeIcon.Copy, "Copy");
         var spacing = ImGui.GetStyle().ItemSpacing.X;
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - sendWidth - copyWidth - spacing * 2);
-        var hint = busy ? Theme.Dots("Translating") : $"Write a message, it goes out in {config.OutgoingTarget}";
+        var hint = busy ? Theme.Dots("Translating") : $"Message to {(isTell && tellTarget.Length > 0 ? tellTarget : channel)}…";
         var submit = ImGui.InputTextWithHint("##compose", hint, ref input, 400, ImGuiInputTextFlags.EnterReturnsTrue);
+        var hasText = input.Trim().Length > 0;
+        var canSend = !isTell || tellTarget.Length > 0;
         ImGui.SameLine();
-        ImGui.BeginDisabled(busy || input.Trim().Length == 0);
+        ImGui.BeginDisabled(busy || !hasText || !canSend);
         submit |= Theme.PrimaryButton(FontAwesomeIcon.PaperPlane, "Send");
-        Theme.Tooltip("Translate and send to the channel on the left (Enter)");
-        ImGui.SameLine();
-        var copy = ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Copy, "Copy");
-        Theme.Tooltip("Translate and copy to the clipboard instead of sending");
         ImGui.EndDisabled();
+        Theme.Tooltip(canSend ? $"Translate and send to {channel} (Enter)" : "Enter who to send the tell to first");
+        ImGui.SameLine();
+        ImGui.BeginDisabled(busy || !hasText);
+        var copy = ImGuiComponents.IconButtonWithText(FontAwesomeIcon.Copy, "Copy");
+        ImGui.EndDisabled();
+        Theme.Tooltip("Translate and copy to the clipboard instead of sending");
 
-        if ((submit || copy) && !busy && input.Trim().Length > 0)
+        if (submit && !copy && !canSend) return;
+        if ((submit || copy) && !busy && hasText)
         {
             var text = input.Trim();
-            var sendPrefix = copy || string.IsNullOrWhiteSpace(config.SendPrefix) ? null : config.SendPrefix.Trim();
+            var sendPrefix = copy ? null : isTell ? $"{ChannelNames.TellPrefix} {tellTarget}" : config.SendPrefix;
             busy = true;
             _ = plugin.TranslateOutgoingAsync(text, sendPrefix).ContinueWith(t =>
             {
@@ -174,6 +175,55 @@ internal sealed class LogWindow : Window
                 busy = false;
             });
         }
+    }
+
+    /// <summary>"To [Party ▾]" row above the message box, plus a Name@World box for tells.</summary>
+    private static void DrawChannelPicker(Configuration config, string channel, bool isTell)
+    {
+        ImGui.AlignTextToFramePadding();
+        ImGui.TextDisabled("To");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(150);
+        ImGui.PushStyleColor(ImGuiCol.Text, Theme.ChannelColor(channel));
+        var open = ImGui.BeginCombo("##channel", channel);
+        ImGui.PopStyleColor();
+        if (open)
+        {
+            foreach (var (prefix, name) in ChannelNames.Outgoing)
+            {
+                var selected = prefix == config.SendPrefix;
+                ImGui.PushStyleColor(ImGuiCol.Text, Theme.ChannelColor(name));
+                if (ImGui.Selectable($"{name}##{prefix}", selected))
+                {
+                    config.SendPrefix = prefix;
+                    config.Save();
+                }
+                ImGui.PopStyleColor();
+                if (selected) ImGui.SetItemDefaultFocus();
+            }
+            ImGui.EndCombo();
+        }
+        Theme.Tooltip("Chat channel the translated message is sent to");
+
+        if (isTell)
+        {
+            ImGui.SameLine();
+            var target = config.TellTarget;
+            ImGui.SetNextItemWidth(170);
+            if (ImGui.InputTextWithHint("##tell", "Name@World", ref target, 64))
+            {
+                config.TellTarget = target;
+                config.Save();
+            }
+            Theme.Tooltip("Who to send the tell to, e.g. Jelly Fish@Tonberry");
+        }
+
+        // Right-aligned language label, dropped when the window is too narrow to fit it.
+        var language = $"in {config.OutgoingTarget}";
+        var x = ImGui.GetContentRegionMax().X - ImGui.CalcTextSize(language).X;
+        if (ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X + ImGui.GetStyle().ItemSpacing.X > x) return;
+        ImGui.SameLine(x);
+        ImGui.TextColored(Theme.Yellow, language);
     }
 
     private void DrawPaste()

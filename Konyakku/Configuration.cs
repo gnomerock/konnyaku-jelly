@@ -75,8 +75,13 @@ public sealed class Configuration : IPluginConfiguration
 
     public bool EchoToGameChat { get; set; } = false;
 
+    /// <summary>Only translate incoming chat while the Konnyaku Jelly window is open, to save tokens.</summary>
+    public bool TranslateOnlyWhenOpen { get; set; } = true;
+
     public int MaxLogEntries { get; set; } = 300;
     public string SendPrefix { get; set; } = "/p";
+    /// <summary>Name@World used when <see cref="SendPrefix"/> is a tell.</summary>
+    public string TellTarget { get; set; } = string.Empty;
 
     /// <summary>Moves saved model names that are no longer offered back to the cheapest allowed model.</summary>
     public void Normalize()
@@ -87,8 +92,30 @@ public sealed class Configuration : IPluginConfiguration
         GeminiModel = ProviderModels.Allowed(ProviderModels.Gemini, GeminiModel);
         if (Array.IndexOf(Language.All, IncomingTarget) < 0) IncomingTarget = "English";
         if (Array.IndexOf(Language.All, OutgoingTarget) < 0) OutgoingTarget = "Japanese";
+        NormalizeSendPrefix();
         Version = 2;
     }
 
-    public void Save() => Plugin.PluginInterface.SavePluginConfig(this);
+    /// <summary>Older versions stored free text such as "/t Name@World"; split it into a dropdown channel and a tell target.</summary>
+    private void NormalizeSendPrefix()
+    {
+        var text = SendPrefix.Trim();
+        var space = text.IndexOf(' ');
+        var prefix = (space < 0 ? text : text[..space]).ToLowerInvariant();
+        prefix = prefix switch
+        {
+            "/tell" => ChannelNames.TellPrefix,
+            "/party" => "/p",
+            "/say" => "/s",
+            "/alliance" => "/a",
+            "/freecompany" => "/fc",
+            "/shout" => "/sh",
+            "/yell" => "/y",
+            _ => prefix,
+        };
+        if (prefix == ChannelNames.TellPrefix && space >= 0 && TellTarget.Length == 0) TellTarget = text[(space + 1)..].Trim();
+        SendPrefix = Array.Exists(ChannelNames.Outgoing, c => c.Prefix == prefix) ? prefix : "/p";
+    }
+
+    public void Save() =>Plugin.PluginInterface.SavePluginConfig(this);
 }

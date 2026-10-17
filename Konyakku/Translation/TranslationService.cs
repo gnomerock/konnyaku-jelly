@@ -71,7 +71,7 @@ internal sealed class TranslationService : IDisposable
     }
 
     private static string Instructions(string target, string customPrompt) => $"""
-        You are Konyakku, a translator for Final Fantasy XIV in-game chat.
+        You are Konnyaku Jelly, a translator for Final Fantasy XIV in-game chat.
         Translate the chat message inside <message> into {target}.
         - Output ONLY the translation, with no quotes, notes or explanations.
         - Keep player names, item names in [brackets], job/role abbreviations (WHM, DRK, tank, healer, DPS), and duty names recognisable; use the wording {target}-speaking FFXIV players actually use.

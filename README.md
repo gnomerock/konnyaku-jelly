@@ -1,10 +1,11 @@
-# Konyakku
+# Konnyaku Jelly
 
 Dalamud plugin for FFXIV that translates chat with ChatGPT, Claude or Gemini.
 
-- **Incoming**: translates chat (Say / Party / FC / Tell / LS / CWLS …) into your incoming language (default: English) and shows it in the Konyakku window.
-- **Outgoing**: type in the box at the bottom of the window → translated to your outgoing language (default: Japanese) → Send (to the channel in the prefix, e.g. `/p`, `/fc`, `/s`) or Copy.
-- **Paste**: the Paste tab in the Konyakku window translates any pasted Japanese text into English, with a button to copy the result.
+- **Incoming**: translates chat (Say / Party / FC / Tell / LS / CWLS …) into your incoming language (default: English) and shows it in the Konnyaku Jelly window.
+- **Outgoing**: type in the box at the bottom of the window → translated to your outgoing language (default: Japanese) → Send (to the channel picked in the **To** dropdown: Party, Say, FC, Tell, LS, CWLS …) or Copy.
+- **Saves tokens**: by default chat is only translated while the Konnyaku Jelly window is open (`/jelly`). Turn this off in Settings to translate all the time.
+- **Paste**: the Paste tab in the Konnyaku Jelly window translates any pasted Japanese text into English, with a button to copy the result.
 - Languages: English and Japanese only for now.
 
 ## Provider
@@ -44,7 +45,7 @@ The plugin refreshes the token itself and writes it back to `auth.json`, so Code
    https://raw.githubusercontent.com/gnomerock/konyakku/main/repo.json
    ```
    tick **Enabled**, then click **+** and **Save and Close**
-3. `/xlplugins` → **All Plugins** → search for **Konyakku** → Install
+3. `/xlplugins` → **All Plugins** → search for **Konnyaku Jelly** → Install
 
 ## Build / dev install
 

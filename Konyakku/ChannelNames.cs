@@ -25,6 +25,26 @@ internal static class ChannelNames
         (XivChatType.CrossLinkShell7, "CWLS7"), (XivChatType.CrossLinkShell8, "CWLS8"),
     ];
 
+    /// <summary>Channels you can send a translated message to, in the order shown in the dropdown.</summary>
+    public static readonly (string Prefix, string Name)[] Outgoing =
+    [
+        ("/p", "Party"), ("/s", "Say"), ("/a", "Alliance"), ("/fc", "Free Company"), ("/t", "Tell"),
+        ("/beginner", "Novice Network"), ("/sh", "Shout"), ("/y", "Yell"),
+        ("/l1", "LS1"), ("/l2", "LS2"), ("/l3", "LS3"), ("/l4", "LS4"),
+        ("/l5", "LS5"), ("/l6", "LS6"), ("/l7", "LS7"), ("/l8", "LS8"),
+        ("/cwl1", "CWLS1"), ("/cwl2", "CWLS2"), ("/cwl3", "CWLS3"), ("/cwl4", "CWLS4"),
+        ("/cwl5", "CWLS5"), ("/cwl6", "CWLS6"), ("/cwl7", "CWLS7"), ("/cwl8", "CWLS8"),
+    ];
+
+    public const string TellPrefix = "/t";
+
+    public static string OutgoingName(string prefix)
+    {
+        foreach (var (p, n) in Outgoing)
+            if (p == prefix) return n;
+        return prefix;
+    }
+
     private static readonly Dictionary<XivChatType, string> Lookup = BuildLookup();
 
     public static string Short(XivChatType type) => Lookup.TryGetValue(type, out var n) ? n : type.ToString();

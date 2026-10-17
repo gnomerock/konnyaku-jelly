@@ -29,7 +29,7 @@ internal sealed class ConfigWindow : Window
     private bool testing;
     private bool themePushed;
 
-    public ConfigWindow(Plugin plugin) : base("Konyakku Settings###KonyakkuConfig")
+    public ConfigWindow(Plugin plugin) : base("Konnyaku Jelly Settings###KonyakkuConfig")
     {
         this.plugin = plugin;
         Size = new Vector2(500, 480);
@@ -130,7 +130,7 @@ internal sealed class ConfigWindow : Window
         ImGuiComponents.HelpMarker("Other players' messages are translated into this language.");
         changed |= Combo("Messages I send", Language.All, c.OutgoingTarget, v => c.OutgoingTarget = v);
         ImGui.SameLine();
-        ImGuiComponents.HelpMarker("What you type in the Konyakku window or with /jelly is translated into this language.");
+        ImGuiComponents.HelpMarker("What you type in the Konnyaku Jelly window or with /jelly is translated into this language.");
 
         ImGui.Spacing();
         Heading("Custom prompt");
@@ -149,6 +149,9 @@ internal sealed class ConfigWindow : Window
     {
         var changed = false;
         Heading("Chat");
+        changed |= Checkbox("Only translate chat while the Konnyaku Jelly window is open", c.TranslateOnlyWhenOpen, v => c.TranslateOnlyWhenOpen = v);
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("Saves tokens: messages that arrive while the window is closed are not translated. Open it with /jelly.");
         changed |= Checkbox("Skip my own messages", c.SkipOwnMessages, v => c.SkipOwnMessages = v);
         changed |= Checkbox("Show the original text under each translation", c.ShowOriginal, v => c.ShowOriginal = v);
         changed |= Checkbox("Also echo translations into game chat", c.EchoToGameChat, v => c.EchoToGameChat = v);

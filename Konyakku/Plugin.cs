@@ -139,7 +139,8 @@ public sealed class Plugin : IDalamudPlugin
         try
         {
             var result = await Translator.TranslateAsync(text, Config.OutgoingTarget) ?? text;
-            AddLog(new LogEntry(DateTime.Now, sendPrefix ?? "me", "me", text, result, true));
+            var channel = sendPrefix == null ? "me" : ChannelNames.OutgoingName(sendPrefix.Split(' ')[0]);
+            AddLog(new LogEntry(DateTime.Now, channel, "me", text, result, true));
             if (sendPrefix != null) await Framework.RunOnFrameworkThread(() => ChatSender.Send($"{sendPrefix} {result}"));
             else CopyToClipboard(result);
             return result;
@@ -147,7 +148,7 @@ public sealed class Plugin : IDalamudPlugin
         catch (Exception ex)
         {
             Log.Warning(ex, "Outgoing translation failed");
-            ChatGui.PrintError($"[Konyakku] {ex.Message}");
+            ChatGui.PrintError($"[Konnyaku Jelly] {ex.Message}");
             return null;
         }
     }
@@ -156,6 +157,7 @@ public sealed class Plugin : IDalamudPlugin
     {
         var type = msg.LogKind;
         if (!Config.Enabled || msg.IsHandled || !Config.Channels.Contains(type)) return;
+        if (Config.TranslateOnlyWhenOpen && !logWindow.IsOpen) return;
 
         var text = msg.Message.TextValue.Trim();
         if (text.Length < 2 || text.All(c => !char.IsLetter(c))) return;
