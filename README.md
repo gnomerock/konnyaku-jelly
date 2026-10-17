@@ -98,7 +98,7 @@ These work well in macros, e.g. `/jelly /p Thanks for the run!`.
 - **Translator**: provider, model and key, and **Test connection**.
 - **Languages**:
   - **Chat I read** and **Messages I send**.
-  - **Custom prompt**: extra instructions added to the built-in FFXIV rules, e.g. `Keep 'gg' and 'o/' as-is. Use casual Japanese.`
+  - **Custom prompt**: extra instructions added to the built-in FFXIV rules. It starts as `Used in FFXIV online communication and raiding contexts.` You can add your own, e.g. `Keep 'gg' and 'o/' as-is. Use casual Japanese.`
 - **Chat**:
   - Only translate while the window is open.
   - Skip your own messages.

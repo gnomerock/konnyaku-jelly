@@ -31,7 +31,9 @@ public static class ProviderModels
 [Serializable]
 public sealed class Configuration : IPluginConfiguration
 {
-    public int Version { get; set; } = 2;
+    public int Version { get; set; } = 3;
+
+    public const string DefaultCustomPrompt = "Used in FFXIV online communication and raiding contexts.";
 
     public bool Enabled { get; set; } = true;
     public ProviderKind Provider { get; set; } = ProviderKind.ChatGptSubscription;
@@ -53,7 +55,7 @@ public sealed class Configuration : IPluginConfiguration
     public string GeminiModel { get; set; } = ProviderModels.Gemini[0];
 
     /// <summary>Extra instructions added to the translation prompt (slang, names, tone…).</summary>
-    public string CustomPrompt { get; set; } = string.Empty;
+    public string CustomPrompt { get; set; } = DefaultCustomPrompt;
 
     public string IncomingTarget { get; set; } = "English";
     public string OutgoingTarget { get; set; } = "Japanese";
@@ -93,7 +95,9 @@ public sealed class Configuration : IPluginConfiguration
         if (Array.IndexOf(Language.All, IncomingTarget) < 0) IncomingTarget = "English";
         if (Array.IndexOf(Language.All, OutgoingTarget) < 0) OutgoingTarget = "Japanese";
         NormalizeSendPrefix();
-        Version = 2;
+        // Version 3 added a default custom prompt; give it to existing users who never wrote their own.
+        if (Version < 3 && string.IsNullOrWhiteSpace(CustomPrompt)) CustomPrompt = DefaultCustomPrompt;
+        Version = 3;
     }
 
     /// <summary>Older versions stored free text such as "/t Name@World"; split it into a dropdown channel and a tell target.</summary>
