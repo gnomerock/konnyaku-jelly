@@ -158,7 +158,7 @@ internal sealed class ConfigWindow : Window
 
         ImGui.Spacing();
         Heading("Channels to translate");
-        ImGui.TextDisabled("Shout and Yell are off by default: busy cities would burn through your quota.");
+        ImGui.TextDisabled("Only Party and Alliance are on by default. Shout and Yell in busy cities burn through your quota.");
         if (ImGui.BeginTable("##channels", 3))
         {
             foreach (var (type, name) in ChannelNames.Selectable)

@@ -60,15 +60,10 @@ public sealed class Configuration : IPluginConfiguration
     public string IncomingTarget { get; set; } = "English";
     public string OutgoingTarget { get; set; } = "Japanese";
 
+    /// <summary>Party (incl. cross-world) and alliance raid chat by default; players opt in to the rest.</summary>
     public HashSet<XivChatType> Channels { get; set; } =
     [
-        XivChatType.Say, XivChatType.Party, XivChatType.CrossParty, XivChatType.Alliance,
-        XivChatType.FreeCompany, XivChatType.TellIncoming, XivChatType.NoviceNetwork,
-        XivChatType.Ls1, XivChatType.Ls2, XivChatType.Ls3, XivChatType.Ls4,
-        XivChatType.Ls5, XivChatType.Ls6, XivChatType.Ls7, XivChatType.Ls8,
-        XivChatType.CrossLinkShell1, XivChatType.CrossLinkShell2, XivChatType.CrossLinkShell3,
-        XivChatType.CrossLinkShell4, XivChatType.CrossLinkShell5, XivChatType.CrossLinkShell6,
-        XivChatType.CrossLinkShell7, XivChatType.CrossLinkShell8,
+        XivChatType.Party, XivChatType.CrossParty, XivChatType.Alliance,
     ];
 
     public bool SkipOwnMessages { get; set; } = true;
