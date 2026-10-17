@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -8,6 +9,9 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Anthropic;
+using Anthropic.Models.Messages;
 
 namespace Konyakku.Translation;
 
@@ -116,5 +120,64 @@ internal sealed class OpenAiApiProvider(HttpClient http, Configuration config) :
             throw new InvalidOperationException($"OpenAI {(int)resp.StatusCode}: {ChatGptSubscriptionProvider.Truncate(body)}");
 
         return (string?)JsonNode.Parse(body)?["choices"]?[0]?["message"]?["content"] ?? string.Empty;
+    }
+}
+
+/// <summary>Anthropic Claude through the official SDK (billed per token, needs an API key).</summary>
+internal sealed class ClaudeProvider(Configuration config) : ITranslationProvider
+{
+    private AnthropicClient? client;
+    private string clientKey = string.Empty;
+
+    public async Task<string> CompleteAsync(string instructions, string input, CancellationToken ct)
+    {
+        var key = config.ClaudeApiKey.Trim();
+        if (key.Length == 0)
+            throw new InvalidOperationException("Claude API key is not set.");
+        if (client == null || clientKey != key)
+        {
+            client = new AnthropicClient { ApiKey = key };
+            clientKey = key;
+        }
+
+        var response = await client.Messages.Create(new MessageCreateParams
+        {
+            Model = config.ClaudeModel,
+            MaxTokens = 4096,
+            System = instructions,
+            OutputConfig = new OutputConfig { Effort = Effort.Low },
+            Messages = [new() { Role = Role.User, Content = input }],
+        }, ct);
+
+        if (response.StopReason == "refusal")
+            throw new InvalidOperationException("Claude declined to translate this message.");
+        return string.Concat(response.Content.Select(b => b.Value).OfType<TextBlock>().Select(t => t.Text));
+    }
+}
+
+/// <summary>Google Gemini API (billed per token, needs an API key).</summary>
+internal sealed class GeminiProvider(HttpClient http, Configuration config) : ITranslationProvider
+{
+    public async Task<string> CompleteAsync(string instructions, string input, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(config.GeminiApiKey))
+            throw new InvalidOperationException("Gemini API key is not set.");
+
+        using var req = new HttpRequestMessage(HttpMethod.Post,
+            $"https://generativelanguage.googleapis.com/v1beta/models/{Uri.EscapeDataString(config.GeminiModel)}:generateContent");
+        req.Headers.Add("x-goog-api-key", config.GeminiApiKey.Trim());
+        req.Content = JsonContent.Create(new
+        {
+            systemInstruction = new { parts = new[] { new { text = instructions } } },
+            contents = new[] { new { role = "user", parts = new[] { new { text = input } } } },
+        });
+
+        using var resp = await http.SendAsync(req, ct);
+        var body = await resp.Content.ReadAsStringAsync(ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Gemini {(int)resp.StatusCode}: {ChatGptSubscriptionProvider.Truncate(body)}");
+
+        var parts = JsonNode.Parse(body)?["candidates"]?[0]?["content"]?["parts"]?.AsArray();
+        return parts == null ? string.Empty : string.Concat(parts.Select(p => (string?)p?["text"]));
     }
 }

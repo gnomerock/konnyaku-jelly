@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Dalamud.Bindings.ImGui;
@@ -8,8 +7,6 @@ using Dalamud.Game.Chat;
 using Dalamud.Game.Command;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Interface;
-using Dalamud.Interface.ManagedFontAtlas;
 using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
@@ -29,17 +26,19 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IFramework Framework { get; private set; } = null!;
     [PluginService] internal static IObjectTable ObjectTable { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
+    [PluginService] internal static IContextMenu ContextMenu { get; private set; } = null!;
+    [PluginService] internal static IPartyFinderGui PartyFinderGui { get; private set; } = null!;
 
     private const string MainCommand = "/konyakku";
-    private const string TranslateCommand = "/tl";
+    private const string TranslateCommand = "/jelly";
 
     internal Configuration Config { get; }
     internal TranslationService Translator { get; }
-    internal IFontHandle ThaiFont { get; }
 
     private readonly WindowSystem windows = new("Konyakku");
     private readonly ConfigWindow configWindow;
     private readonly LogWindow logWindow;
+    private readonly PartyFinderTranslator partyFinder;
     private readonly object logLock = new();
     private readonly List<LogEntry> log = [];
     private string? pendingClipboard;
@@ -47,8 +46,8 @@ public sealed class Plugin : IDalamudPlugin
     public Plugin()
     {
         Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+        Config.Normalize();
         Translator = new TranslationService(Config);
-        ThaiFont = CreateFont();
 
         configWindow = new ConfigWindow(this);
         logWindow = new LogWindow(this);
@@ -61,9 +60,10 @@ public sealed class Plugin : IDalamudPlugin
         });
         CommandManager.AddHandler(TranslateCommand, new CommandInfo(OnTranslateCommand)
         {
-            HelpMessage = "<text> — translate to your outgoing language and copy it. \"/tl /p <text>\" translates and sends to party.",
+            HelpMessage = "<text> — translate to your outgoing language and copy it. \"/jelly /p <text>\" translates and sends to party.",
         });
 
+        partyFinder = new PartyFinderTranslator(this, ContextMenu, PartyFinderGui);
         ChatGui.ChatMessage += OnChatMessage;
         PluginInterface.UiBuilder.Draw += DrawUi;
         PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
@@ -72,6 +72,7 @@ public sealed class Plugin : IDalamudPlugin
 
     public void Dispose()
     {
+        partyFinder.Dispose();
         ChatGui.ChatMessage -= OnChatMessage;
         PluginInterface.UiBuilder.Draw -= DrawUi;
         PluginInterface.UiBuilder.OpenConfigUi -= configWindow.Toggle;
@@ -79,7 +80,6 @@ public sealed class Plugin : IDalamudPlugin
         CommandManager.RemoveHandler(MainCommand);
         CommandManager.RemoveHandler(TranslateCommand);
         windows.RemoveAllWindows();
-        ThaiFont.Dispose();
         Translator.Dispose();
     }
 
@@ -106,22 +106,6 @@ public sealed class Plugin : IDalamudPlugin
         }
         windows.Draw();
     }
-
-    private IFontHandle CreateFont() =>
-        PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(tk =>
-        {
-            var size = UiBuilder.DefaultFontSizePx;
-            var font = tk.AddDalamudDefaultFont(size);
-            var path = new[] { Config.FontPath, @"C:\Windows\Fonts\LeelawUI.ttf", @"C:\Windows\Fonts\tahoma.ttf" }
-                .FirstOrDefault(File.Exists);
-            if (path == null) return;
-            tk.AddFontFromFile(path, new SafeFontConfig
-            {
-                SizePx = size,
-                MergeFont = font,
-                GlyphRanges = [0x0020, 0x00FF, 0x0E00, 0x0E7F, 0],
-            });
-        }));
 
     private void OnMainCommand(string command, string args)
     {
@@ -178,7 +162,7 @@ public sealed class Plugin : IDalamudPlugin
 
         var senderName = msg.Sender.TextValue;
         if (Config.SkipOwnMessages && ObjectTable.LocalPlayer?.Name.TextValue is { Length: > 0 } me && senderName.Contains(me)) return;
-        if (Config.IncomingTarget.Equals("Thai", StringComparison.OrdinalIgnoreCase) && text.Any(c => c is >= '\u0E00' and <= '\u0E7F')) return;
+        if (Language.IsAlreadyIn(text, Config.IncomingTarget)) return;
 
         _ = TranslateIncomingAsync(type, senderName, text);
     }
@@ -206,7 +190,7 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
-    private void AddLog(LogEntry entry)
+    internal void AddLog(LogEntry entry)
     {
         lock (logLock)
         {
