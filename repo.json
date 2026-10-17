@@ -3,7 +3,7 @@
     "Author": "gnomerock",
     "Name": "Konyakku",
     "InternalName": "Konyakku",
-    "AssemblyVersion": "0.1.1.0",
+    "AssemblyVersion": "0.2.0.0",
     "Punchline": "translate FFXIV chat with ChatGPT, Claude or Gemini.",
     "Description": "Translates incoming chat into your language and lets you write messages in your own language, translated before sending. Works with your ChatGPT subscription (via Codex CLI login) or an OpenAI, Claude or Gemini API key.",
     "ApplicableVersion": "any",
@@ -22,9 +22,9 @@
     "DalamudApiLevel": 15,
     "LoadPriority": 0,
     "AcceptsFeedback": true,
-    "DownloadLinkInstall": "https://github.com/gnomerock/konyakku/releases/download/v0.1.1.0/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/gnomerock/konyakku/releases/download/v0.1.1.0/latest.zip",
-    "DownloadLinkTesting": "https://github.com/gnomerock/konyakku/releases/download/v0.1.1.0/latest.zip",
-    "LastUpdate": 1792178828
+    "DownloadLinkInstall": "https://github.com/gnomerock/konyakku/releases/download/v0.2.0.0/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/gnomerock/konyakku/releases/download/v0.2.0.0/latest.zip",
+    "DownloadLinkTesting": "https://github.com/gnomerock/konyakku/releases/download/v0.2.0.0/latest.zip",
+    "LastUpdate": 1792210208
   }
 ]
