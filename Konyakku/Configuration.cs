@@ -71,6 +71,7 @@ public sealed class Configuration : IPluginConfiguration
 
     public bool SkipOwnMessages { get; set; } = true;
     public bool ShowOriginal { get; set; } = true;
+    public bool UseTheme { get; set; } = true;
 
     public bool EchoToGameChat { get; set; } = false;
 

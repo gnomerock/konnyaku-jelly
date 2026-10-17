@@ -22,6 +22,8 @@ internal sealed class TranslationService : IDisposable
 
     public string? LastError { get; private set; }
 
+    public void ClearError() => LastError = null;
+
     public TranslationService(Configuration config)
     {
         this.config = config;
