@@ -32,6 +32,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IContextMenu ContextMenu { get; private set; } = null!;
     [PluginService] internal static IPartyFinderGui PartyFinderGui { get; private set; } = null!;
     [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
+    [PluginService] internal static IGameGui GameGui { get; private set; } = null!;
 
     private const string MainCommand = "/konyakku";
     private const string TranslateCommand = "/jelly";
@@ -49,6 +50,7 @@ public sealed class Plugin : IDalamudPlugin
     private readonly ConfigWindow configWindow;
     private readonly LogWindow logWindow;
     private readonly EdgeTab edgeTab;
+    private readonly ChatBoxButton chatBoxButton;
     private readonly PartyFinderTranslator partyFinder;
     private readonly object logLock = new();
     private readonly List<LogEntry> log = [];
@@ -69,6 +71,7 @@ public sealed class Plugin : IDalamudPlugin
         windows.AddWindow(configWindow);
         windows.AddWindow(logWindow);
         edgeTab = new EdgeTab(this);
+        chatBoxButton = new ChatBoxButton(this);
 
         CommandManager.AddHandler(MainCommand, new CommandInfo(OnMainCommand)
         {
@@ -150,6 +153,7 @@ public sealed class Plugin : IDalamudPlugin
         }
         windows.Draw();
         edgeTab.Draw();
+        chatBoxButton.Draw();
     }
 
     private void OnMainCommand(string command, string args)

@@ -58,13 +58,17 @@ internal sealed class LogWindow : Window
     {
         themePushed = Theme.Push(plugin.Config.UseTheme);
 
-        // Docked: a drawer pinned to the left edge at the Jelly tab's height, sliding in when opened.
-        if (plugin.Config.DockToEdge)
+        // Docked: a drawer pinned to the Jelly tab's edge at the tab's height, sliding in when opened.
+        var config = plugin.Config;
+        if (EdgeTab.Docked(config))
         {
             slide = Math.Min(1f, slide + ImGui.GetIO().DeltaTime * 6f);
             var eased = 1 - MathF.Pow(1 - slide, 3);
             var viewport = ImGui.GetMainViewport();
-            Position = new Vector2(viewport.Pos.X - lastWidth * (1 - eased), EdgeTab.Top(viewport));
+            var x = config.TabEdge == TabEdge.Right
+                ? viewport.Pos.X + viewport.Size.X - lastWidth * eased
+                : viewport.Pos.X - lastWidth * (1 - eased);
+            Position = new Vector2(x, EdgeTab.Top(viewport, config));
             PositionCondition = ImGuiCond.Always;
             Flags |= ImGuiWindowFlags.NoMove;
         }

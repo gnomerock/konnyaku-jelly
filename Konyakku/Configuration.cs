@@ -19,6 +19,9 @@ public enum ProviderKind
     Gemini,
 }
 
+/// <summary>Where the Jelly tab sits: stuck to a screen edge, or floating where it was dropped.</summary>
+public enum TabEdge { Left, Right, Free }
+
 /// <summary>Models offered in settings for each provider. The first entry is the cheapest and is the default.</summary>
 public static class ProviderModels
 {
@@ -72,12 +75,21 @@ public sealed class Configuration : IPluginConfiguration
     public bool ShowOriginal { get; set; } = true;
     public bool UseTheme { get; set; } = true;
     public bool SidebarCollapsed { get; set; } = false;
-    /// <summary>The vertical "Jelly" tab on the left edge of the screen that opens and hides the window.</summary>
+    /// <summary>The vertical "Jelly" tab that opens and hides the window. It can be dragged to either screen edge or anywhere.</summary>
     public bool ShowEdgeTab { get; set; } = true;
-    /// <summary>Open the window as a drawer pinned to the left edge, level with the Jelly tab.</summary>
+    /// <summary>Which screen edge the Jelly tab sticks to, or <see cref="TabEdge.Free"/> when it was dropped away from the edges.</summary>
+    public TabEdge TabEdge { get; set; } = TabEdge.Left;
+    /// <summary>The tab's top as a fraction of the screen height.</summary>
+    public float TabY { get; set; } = 0.18f;
+    /// <summary>The tab's left side as a fraction of the screen width; only used when <see cref="TabEdge"/> is Free.</summary>
+    public float TabX { get; set; } = 0.5f;
+    /// <summary>Open the window as a drawer pinned to the Jelly tab's edge, level with the tab.</summary>
     public bool DockToEdge { get; set; } = true;
 
     public bool EchoToGameChat { get; set; } = false;
+
+    /// <summary>A translate button next to the game's chat input that rewrites what you typed in your outgoing language.</summary>
+    public bool ShowChatBoxButton { get; set; } = true;
 
     /// <summary>Only translate incoming chat while the Konnyaku Jelly window is open, to save tokens.</summary>
     public bool TranslateOnlyWhenOpen { get; set; } = true;
@@ -124,6 +136,9 @@ public sealed class Configuration : IPluginConfiguration
         }
         ActiveFilter = Math.Clamp(ActiveFilter, 0, Filters.Count - 1);
         ForgetAfterMinutes = Math.Clamp(ForgetAfterMinutes, 1, 120);
+        if (!Enum.IsDefined(TabEdge)) TabEdge = TabEdge.Left;
+        TabX = float.IsFinite(TabX) ? Math.Clamp(TabX, 0f, 1f) : 0.5f;
+        TabY = float.IsFinite(TabY) ? Math.Clamp(TabY, 0f, 1f) : 0.18f;
         Version = 4;
     }
 

@@ -169,6 +169,9 @@ internal sealed class ConfigWindow : Window
         changed |= Checkbox("Also echo translations into game chat", c.EchoToGameChat, v => c.EchoToGameChat = v);
         if (c.EchoToGameChat && c.IncomingTarget == "Thai")
             ImGui.TextColored(Theme.Warn, "Thai isn't echoed: the game's chat font has no Thai letters. Read it in the Konnyaku Jelly window.");
+        changed |= Checkbox("Translate button next to the game's chat box", c.ShowChatBoxButton, v => c.ShowChatBoxButton = v);
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("Type in the game's chat box, then click the button: what you typed is replaced with its translation (Write in), ready to send with Enter. A channel command such as /p stays as typed.");
 
         ImGui.Spacing();
         Heading("Channels to translate");
@@ -402,12 +405,22 @@ internal sealed class ConfigWindow : Window
         changed |= Checkbox("Blue & white theme", c.UseTheme, v => c.UseTheme = v);
         ImGui.SameLine();
         ImGuiComponents.HelpMarker("Turn off to use your normal Dalamud style.");
-        changed |= Checkbox("Jelly tab on the left edge of the screen", c.ShowEdgeTab, v => c.ShowEdgeTab = v);
+        changed |= Checkbox("Show the Jelly tab", c.ShowEdgeTab, v => c.ShowEdgeTab = v);
         ImGui.SameLine();
-        ImGuiComponents.HelpMarker("A small vertical tab on the left edge of the screen. Click it to open or hide the Konnyaku Jelly window.");
-        changed |= Checkbox("Open the window as a drawer from the left edge", c.DockToEdge, v => c.DockToEdge = v);
+        ImGuiComponents.HelpMarker("A small vertical tab that opens or hides the Konnyaku Jelly window. Drag it to move it: drop it at the left or right edge of the screen to stick it there, or anywhere else to leave it floating.");
+        if (c.ShowEdgeTab && c.TabEdge != TabEdge.Left)
+        {
+            ImGui.SameLine();
+            if (ImGui.SmallButton("Back to the left edge"))
+            {
+                c.TabEdge = TabEdge.Left;
+                c.TabY = 0.18f;
+                changed = true;
+            }
+        }
+        changed |= Checkbox("Open the window as a drawer from the Jelly tab's edge", c.DockToEdge, v => c.DockToEdge = v);
         ImGui.SameLine();
-        ImGuiComponents.HelpMarker("The window slides out from the left edge, level with the Jelly tab. Turn off to move the window anywhere.");
+        ImGuiComponents.HelpMarker("While the Jelly tab sticks to an edge, the window slides out from that edge, level with the tab. When the tab floats, or this is off, the window is a normal window you can move anywhere.");
         var max = c.MaxLogEntries;
         ImGui.SetNextItemWidth(FieldWidth);
         if (ImGui.SliderInt("Lines kept in the log", ref max, 50, 1000)) { c.MaxLogEntries = max; changed = true; }

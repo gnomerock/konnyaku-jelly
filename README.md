@@ -55,7 +55,7 @@ Click **Test connection**. You should see `It works! → ありがとう…`.
 
 Type `/jelly` (or `/konyakku`). Keep this window open while you play: incoming chat is only translated while it's open, so you don't pay for chat you never read. You can turn that off in **Settings → Chat**.
 
-**Jelly tab:** a small vertical **Jelly** tab sits on the **left edge of the screen**. Click it and the window slides out from that edge like a drawer, covering the tab. Close the window (✕) and the tab comes back. In **Settings → Look** you can turn the tab off, or turn off the drawer so the window can be moved anywhere.
+**Jelly tab:** a small vertical **Jelly** tab sits on the **left edge of the screen**. Click it and the window slides out from that edge like a drawer, covering the tab. Close the window (✕) and the tab comes back. Drag the tab to move it: drop it at the **left or right edge** to stick it there, or anywhere else to leave it floating. While it floats, the window opens as a normal window you can move anywhere. In **Settings → Look** you can turn the tab off, put it back on the left edge, or turn off the drawer.
 
 The **sidebar** on the left of the window has:
 
@@ -79,6 +79,8 @@ At the bottom of the **Chat** page:
 2. For **Tell**, also type who it's for, as `Name@World`.
 3. Type your message in your own language and press **Enter** or **Send**. It's translated and sent.
 4. Click **Copy** instead to translate it and copy it to the clipboard without sending, so you can check it first or paste it somewhere else.
+
+**From the game's own chat box:** a small blue translate button sits just right of the game's chat input. Type your message there as usual (a channel command like `/p` or `/t Name@World` at the start is fine), then click the button. Your text is replaced with the translation, and you press **Enter** to send it. You can turn the button off in **Settings → Chat**.
 
 ### 6. Translate pasted text
 
@@ -128,6 +130,7 @@ These work well in macros, e.g. `/jelly /p Thanks for the run!`.
   - Skip your own messages.
   - Show the original text.
   - Echo translations into game chat (`[Jelly]`).
+  - Translate button next to the game's chat box.
   - Which channels to translate. Only Party (including cross-world party) and Alliance are on by default. Tick FC, Tells, LS and the others if you want them. Be careful with Shout and Yell: busy cities burn through your quota.
 - **Party Finder**: how long a listing stays after the game last sent it (default 15 minutes).
 - **Words**:
