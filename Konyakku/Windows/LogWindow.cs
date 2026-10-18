@@ -29,7 +29,13 @@ internal sealed class LogWindow : Window
     private int seenVersion;
     private float sidebarWidth = -1;
     private float slide = 1;
-    private float lastWidth = 640;
+    private Vector2 lastSize = new(640, 420);
+    private Vector2 lastPos;
+    private Vector2? placeAt;
+    // Dragging the normal window against a screen edge docks it again; it then eases from snapFrom onto the edge.
+    private bool moving;
+    private float snap = 1;
+    private float snapFrom;
 
     private string pasteInput = string.Empty;
     private string pasteResult = string.Empty;
@@ -52,6 +58,16 @@ internal sealed class LogWindow : Window
         IsOpen = true;
     }
 
+    /// <summary>The size the window had when last drawn.</summary>
+    public Vector2 LastSize => lastSize;
+
+    /// <summary>Opens the window as a normal window with its top-left corner at <paramref name="pos"/>.</summary>
+    public void OpenAt(Vector2 pos)
+    {
+        placeAt = pos;
+        IsOpen = true;
+    }
+
     public override void OnOpen() => slide = 0;
 
     public override void PreDraw()
@@ -66,11 +82,24 @@ internal sealed class LogWindow : Window
             var eased = 1 - MathF.Pow(1 - slide, 3);
             var viewport = ImGui.GetMainViewport();
             var x = config.TabEdge == TabEdge.Right
-                ? viewport.Pos.X + viewport.Size.X - lastWidth * eased
-                : viewport.Pos.X - lastWidth * (1 - eased);
+                ? viewport.Pos.X + viewport.Size.X - lastSize.X * eased
+                : viewport.Pos.X - lastSize.X * (1 - eased);
+            if (snap < 1)
+            {
+                snap = Math.Min(1f, snap + ImGui.GetIO().DeltaTime * 7f);
+                x = snapFrom + (x - snapFrom) * (1 - MathF.Pow(1 - snap, 3));
+            }
             Position = new Vector2(x, EdgeTab.Top(viewport, config));
             PositionCondition = ImGuiCond.Always;
             Flags |= ImGuiWindowFlags.NoMove;
+        }
+        else if (placeAt is { } at)
+        {
+            // Dragged out of the Jelly tab: appear where it was dropped, then move freely.
+            Position = at;
+            PositionCondition = ImGuiCond.Always;
+            Flags &= ~ImGuiWindowFlags.NoMove;
+            placeAt = null;
         }
         else if (Position != null)
         {
@@ -84,8 +113,10 @@ internal sealed class LogWindow : Window
 
     public override void Draw()
     {
-        lastWidth = ImGui.GetWindowWidth();
         var config = plugin.Config;
+        var size = ImGui.GetWindowSize();
+        TrackDocking(config, size);
+        lastSize = size;
         DrawSidebar(config);
         ImGui.SameLine();
 
@@ -102,6 +133,48 @@ internal sealed class LogWindow : Window
             }
         }
         ImGui.EndChild();
+    }
+
+    /// <summary>While the normal window is dragged with the mouse at a screen edge, highlight that edge; let go to dock it there.</summary>
+    private void TrackDocking(Configuration config, Vector2 size)
+    {
+        var pos = ImGui.GetWindowPos();
+        if (!config.DockToEdge || EdgeTab.Docked(config))
+        {
+            moving = false;
+            lastPos = pos;
+            return;
+        }
+
+        var viewport = ImGui.GetMainViewport();
+        var down = ImGui.IsMouseDown(ImGuiMouseButton.Left);
+        // Moved without changing size: it's being dragged, not resized.
+        if (down && pos != lastPos && size == lastSize && ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows)) moving = true;
+        var edge = moving ? EdgeTab.EdgeAt(ImGui.GetIO().MousePos, viewport) : null;
+        if (edge is { } e)
+        {
+            var scale = ImGuiHelpers.GlobalScale;
+            var bar = 5 * scale;
+            var x = e == TabEdge.Left ? viewport.Pos.X : viewport.Pos.X + viewport.Size.X - bar;
+            var draw = ImGui.GetForegroundDrawList();
+            draw.AddRectFilled(new Vector2(x, pos.Y), new Vector2(x + bar, pos.Y + size.Y), ImGui.GetColorU32(Theme.Yellow));
+            if (down) ImGui.SetTooltip("Let go to dock Konnyaku Jelly to this edge");
+        }
+        if (!down)
+        {
+            if (edge is { } dock)
+            {
+                config.TabEdge = dock;
+                config.TabY = Math.Clamp((pos.Y - viewport.Pos.Y) / viewport.Size.Y, 0f, 1f);
+                config.Detached = false;
+                config.Save();
+                slide = 1;
+                snap = 0;
+                snapFrom = pos.X;
+            }
+            moving = false;
+        }
+        lastPos = pos;
     }
 
     /// <summary>Navigation on the left. Collapses to an icon strip; the width eases between the two sizes.</summary>

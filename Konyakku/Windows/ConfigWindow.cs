@@ -407,20 +407,21 @@ internal sealed class ConfigWindow : Window
         ImGuiComponents.HelpMarker("Turn off to use your normal Dalamud style.");
         changed |= Checkbox("Show the Jelly tab", c.ShowEdgeTab, v => c.ShowEdgeTab = v);
         ImGui.SameLine();
-        ImGuiComponents.HelpMarker("A small vertical tab that opens or hides the Konnyaku Jelly window. Drag it to move it: drop it at the left or right edge of the screen to stick it there, or anywhere else to leave it floating.");
-        if (c.ShowEdgeTab && c.TabEdge != TabEdge.Left)
+        ImGuiComponents.HelpMarker("A small vertical tab that opens or hides the Konnyaku Jelly window. Drag it along the left or right edge of the screen to move it, or drag it out onto the screen to turn it into a normal window there.");
+        if (c.ShowEdgeTab && (c.TabEdge != TabEdge.Left || c.Detached))
         {
             ImGui.SameLine();
             if (ImGui.SmallButton("Back to the left edge"))
             {
                 c.TabEdge = TabEdge.Left;
                 c.TabY = 0.18f;
+                c.Detached = false;
                 changed = true;
             }
         }
         changed |= Checkbox("Open the window as a drawer from the Jelly tab's edge", c.DockToEdge, v => c.DockToEdge = v);
         ImGui.SameLine();
-        ImGuiComponents.HelpMarker("While the Jelly tab sticks to an edge, the window slides out from that edge, level with the tab. When the tab floats, or this is off, the window is a normal window you can move anywhere.");
+        ImGuiComponents.HelpMarker("The window slides out from the Jelly tab's edge, level with the tab. Drag the tab out onto the screen to make it a normal window instead, and drag that window against a screen edge to dock it again. When this is off, the window is always a normal window.");
         var max = c.MaxLogEntries;
         ImGui.SetNextItemWidth(FieldWidth);
         if (ImGui.SliderInt("Lines kept in the log", ref max, 50, 1000)) { c.MaxLogEntries = max; changed = true; }

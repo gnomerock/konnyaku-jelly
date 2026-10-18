@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -143,6 +144,12 @@ public sealed class Plugin : IDalamudPlugin
     internal bool IsMainWindowOpen => logWindow.IsOpen;
 
     internal void ToggleMainWindow() => logWindow.Toggle();
+
+    /// <summary>The jelly window's last drawn size, for the tab's drag preview.</summary>
+    internal Vector2 MainWindowSize => logWindow.LastSize;
+
+    /// <summary>Opens the jelly window as a normal window with its top-left corner at <paramref name="pos"/>.</summary>
+    internal void OpenMainWindowAt(Vector2 pos) => logWindow.OpenAt(pos);
 
     private void DrawUi()
     {

@@ -20,7 +20,7 @@ public enum ProviderKind
 }
 
 /// <summary>Where the Jelly tab sits: stuck to a screen edge, or floating where it was dropped.</summary>
-public enum TabEdge { Left, Right, Free }
+public enum TabEdge { Left, Right }
 
 /// <summary>Models offered in settings for each provider. The first entry is the cheapest and is the default.</summary>
 public static class ProviderModels
@@ -36,7 +36,7 @@ public static class ProviderModels
 [Serializable]
 public sealed class Configuration : IPluginConfiguration
 {
-    public int Version { get; set; } = 4;
+    public int Version { get; set; } = 5;
 
     public const string DefaultCustomPrompt = "Used in FFXIV online communication and raiding contexts.";
 
@@ -75,14 +75,15 @@ public sealed class Configuration : IPluginConfiguration
     public bool ShowOriginal { get; set; } = true;
     public bool UseTheme { get; set; } = true;
     public bool SidebarCollapsed { get; set; } = false;
-    /// <summary>The vertical "Jelly" tab that opens and hides the window. It can be dragged to either screen edge or anywhere.</summary>
+    /// <summary>The vertical "Jelly" tab that opens and hides the window. It can be dragged along either screen edge.</summary>
     public bool ShowEdgeTab { get; set; } = true;
-    /// <summary>Which screen edge the Jelly tab sticks to, or <see cref="TabEdge.Free"/> when it was dropped away from the edges.</summary>
+    /// <summary>Which screen edge the Jelly tab sticks to.</summary>
     public TabEdge TabEdge { get; set; } = TabEdge.Left;
     /// <summary>The tab's top as a fraction of the screen height.</summary>
     public float TabY { get; set; } = 0.18f;
-    /// <summary>The tab's left side as a fraction of the screen width; only used when <see cref="TabEdge"/> is Free.</summary>
-    public float TabX { get; set; } = 0.5f;
+    /// <summary>The tab was dragged off its edge, so the window is a normal window rather than a drawer. Dragging the
+    /// window (or the tab) back to an edge docks it again.</summary>
+    public bool Detached { get; set; } = false;
     /// <summary>Open the window as a drawer pinned to the Jelly tab's edge, level with the tab.</summary>
     public bool DockToEdge { get; set; } = true;
 
@@ -136,10 +137,14 @@ public sealed class Configuration : IPluginConfiguration
         }
         ActiveFilter = Math.Clamp(ActiveFilter, 0, Filters.Count - 1);
         ForgetAfterMinutes = Math.Clamp(ForgetAfterMinutes, 1, 120);
-        if (!Enum.IsDefined(TabEdge)) TabEdge = TabEdge.Left;
-        TabX = float.IsFinite(TabX) ? Math.Clamp(TabX, 0f, 1f) : 0.5f;
+        // Version 4 had a floating tab (TabEdge 2); now the tab stays on an edge and the window detaches instead.
+        if (!Enum.IsDefined(TabEdge))
+        {
+            TabEdge = TabEdge.Left;
+            Detached = true;
+        }
         TabY = float.IsFinite(TabY) ? Math.Clamp(TabY, 0f, 1f) : 0.18f;
-        Version = 4;
+        Version = 5;
     }
 
     /// <summary>Older versions stored free text such as "/t Name@World"; split it into a dropdown channel and a tell target.</summary>
