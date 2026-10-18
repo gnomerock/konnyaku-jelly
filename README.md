@@ -86,7 +86,7 @@ Click **Paste** in the sidebar, paste Japanese text (Ctrl+V or the **Paste** but
 
 ### 7. Party Finder
 
-**In the game's Party Finder:** right-click a listing (or inside its details window) → **Translate**. The description is shown in English in your game chat, marked `[KY PF]`, and in the Konnyaku Jelly log.
+**In the game's Party Finder:** right-click a listing (or inside its details window) → **Translate**. The description is shown in English in your game chat, marked `[Jelly PF]`, and in the Konnyaku Jelly log.
 
 **In the jelly window:** click **Party Finder** in the sidebar (or type `/tazu`). It lists the listings the game has loaded, so open the game's Party Finder and browse the categories you care about first. Listings stay after you close it, until they expire.
 
@@ -127,7 +127,7 @@ These work well in macros, e.g. `/jelly /p Thanks for the run!`.
   - Only translate while the window is open.
   - Skip your own messages.
   - Show the original text.
-  - Echo translations into game chat (`[KY]`).
+  - Echo translations into game chat (`[Jelly]`).
   - Which channels to translate. Only Party (including cross-world party) and Alliance are on by default. Tick FC, Tells, LS and the others if you want them. Be careful with Shout and Yell: busy cities burn through your quota.
 - **Party Finder**: how long a listing stays after the game last sent it (default 15 minutes).
 - **Words**:

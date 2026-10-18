@@ -73,7 +73,7 @@ dotnet build Konyakku/Konyakku.csproj -c Release   # or `dotnet build -c Release
 - **`PartyFinderTranslator.cs`**:
   - Caches listing descriptions from `PartyFinderGui.ReceiveListing`.
   - Adds a **Translate** context-menu item in the `LookingForGroup`/`LookingForGroupDetail` addons. When the cache misses, it reads `AgentLookingForGroup.LastViewedListing`.
-  - Echoes the result into game chat as `[KY PF]`.
+  - Echoes the result into game chat as `[Jelly PF]`.
 - **`Windows/`**:
   - `LogWindow` is "the jelly window". A collapsible sidebar (`NavItem` rows, eased width, `Config.SidebarCollapsed`) switches between the Chat page (log plus composer), the Paste page, the Party Finder page (`ListingsPage`, which also translates descriptions on right-click) and the Filters page (`FilterPage`), and holds Pause/Resume, Clear log and Settings. The unread dot and auto-scroll compare against `Plugin.LogVersion`, because the log's length stops changing once it's full.
   - `EdgeTab` is not a `Window`. It's drawn every frame from `Plugin.DrawUi`: an always-visible vertical "Jelly" tab on the left screen edge at `EdgeTab.Top()`, which toggles `LogWindow` (`Config.ShowEdgeTab`). With `Config.DockToEdge` on, `LogWindow.PreDraw` pins the window to the left edge at that same height as a drawer (`NoMove`, slides in on `OnOpen`), and the tab hides while the window covers it.

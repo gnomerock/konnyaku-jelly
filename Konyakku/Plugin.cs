@@ -242,7 +242,7 @@ public sealed class Plugin : IDalamudPlugin
             if (Config.EchoToGameChat && Config.IncomingTarget != "Thai")
             {
                 var se = new SeStringBuilder()
-                    .AddUiForeground("[KY] ", 45)
+                    .AddUiForeground("[Jelly] ", 45)
                     .AddText($"{sender}: {result}")
                     .Build();
                 await Framework.RunOnFrameworkThread(() => ChatGui.Print(new XivChatEntry { Type = XivChatType.Echo, Message = se }));

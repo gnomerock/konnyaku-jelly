@@ -84,14 +84,14 @@ internal sealed class PartyFinderTranslator : IDisposable
             var result = await plugin.Translator.TranslateAsync(description, Target, new Received(true, string.Empty));
             plugin.AddLog(new LogEntry(DateTime.Now, "PF", "Party Finder", description, result ?? description, false));
             message = new SeStringBuilder()
-                .AddUiForeground("[KY PF] ", 45)
+                .AddUiForeground("[Jelly PF] ", 45)
                 .AddText(result ?? $"(already in {Target}) {description}")
                 .Build();
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             Plugin.Log.Warning(ex, "Party Finder translation failed");
-            message = new SeStringBuilder().AddUiForeground($"[KY PF] Translation failed: {ex.Message}", 17).Build();
+            message = new SeStringBuilder().AddUiForeground($"[Jelly PF] Translation failed: {ex.Message}", 17).Build();
         }
 
         await Plugin.Framework.RunOnFrameworkThread(() =>
