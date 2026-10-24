@@ -9,7 +9,7 @@ Dalamud plugin for FFXIV that translates chat with ChatGPT, Claude or Gemini.
 - **Read chat**: Party and Alliance chat (plus FC, Tells, LS, CWLS … if you turn them on) is translated into your language (default: English) and shown in the Konnyaku Jelly window.
 - **Write chat**: type in your own language, pick a channel from the **To** dropdown, and it goes out translated (default: Japanese).
 - **Paste**: translate any Japanese text you copied, e.g. from a website or a Discord message.
-- **Party Finder**: browse listings in the window, filtered by duty, open slots for your job, item level and more, and translate their descriptions. Or right-click a listing in the game's Party Finder → **Translate**.
+- **Party Finder**: right-click a listing in the game's Party Finder → **Translate**.
 - **Saves tokens**: by default chat is only translated while the window is open.
 - Languages: English and Japanese both ways. Chat you read can also be translated into Thai. It shows in the Konnyaku Jelly window, not in game chat, because the game's font has no Thai letters.
 
@@ -29,7 +29,7 @@ Dalamud plugin for FFXIV that translates chat with ChatGPT, Claude or Gemini.
 
 ### 2. Choose who translates
 
-Open the settings with `/konyakku config` (or **Settings** in the window's sidebar). On the **Translator** tab, pick one:
+Open the settings with **Settings** in the window's sidebar. On the **Translator** tab, pick one:
 
 | Option | What you need | Cost |
 |---|---|---|
@@ -53,13 +53,13 @@ Click **Test connection**. You should see `It works! → ありがとう…`.
 
 ### 3. Open the window
 
-Type `/jelly` (or `/konyakku`). Keep this window open while you play: incoming chat is only translated while it's open, so you don't pay for chat you never read. You can turn that off in **Settings → Chat**.
+Type `/jelly`. Keep this window open while you play: incoming chat is only translated while it's open, so you don't pay for chat you never read. You can turn that off in **Settings → Chat**.
 
 **Jelly tab:** a small vertical **Jelly** tab sits on the **left edge of the screen**. Click it and the window slides out from that edge like a drawer, covering the tab. Close the window (✕) and the tab comes back. Drag the tab (it wobbles like jelly) along the **left or right edge** to move it, or drag it **out onto the screen** and it turns into a normal window where you drop it. Drag that window against a screen edge and let go to dock it as a drawer again. In **Settings → Look** you can turn the tab off, put it back on the left edge, or turn off the drawer.
 
 The **sidebar** on the left of the window has:
 
-- The pages: **Chat**, **Paste**, **Party Finder** and **Filters**. A red dot on Chat means new translations arrived while you were on another page.
+- The pages: **Chat** and **Paste**. A red dot on Chat means new translations arrived while you were on another page.
 - **Translating / Paused** at the bottom, to pause and resume chat translation.
 - **Clear log** and **Settings**.
 - The **«** button at the top collapses the sidebar to icons only, to save space. Click **»** to expand it again.
@@ -88,34 +88,15 @@ Click **Paste** in the sidebar, paste Japanese text (Ctrl+V or the **Paste** but
 
 ### 7. Party Finder
 
-**In the game's Party Finder:** right-click a listing (or inside its details window) → **Translate**. The description is shown in English in your game chat, marked `[Jelly PF]`, and in the Konnyaku Jelly log.
-
-**In the jelly window:** click **Party Finder** in the sidebar (or type `/tazu`). It lists the listings the game has loaded, so open the game's Party Finder and browse the categories you care about first. Listings stay after you close it, until they expire.
-
-- Pick a filter from the dropdown at the top. Two come ready: **Everything** and **Room for my job**.
-- Hover a listing for its full description, who's in the party and which jobs each open slot takes.
-- Right-click a listing to **Translate description** (into your "Chat I read" language), copy the leader's `Name@World`, or copy the description.
-- The 🗑 button at the top right forgets every listing collected so far.
-
-Make and edit filters on the **Filters** page (`/tazu filters`). A filter can check:
-
-- **Duty**: categories and specific duties (search by name, e.g. "savage").
-- **Open slots**: any slot, a slot for the job you're on, or a slot for jobs you pick, and a minimum number of open slots. One-player-per-job parties don't count jobs they already have.
-- **Listing conditions**: your item level against the listing's minimum, objective, completion condition, data center wide, one player per job, beginners welcome, and hiding password-protected listings.
-
-Use **+** for a new filter, the copy button to duplicate one, Ctrl+click the trash to delete, and **Use** to show it on the Party Finder page.
+In the game's Party Finder, right-click a listing (or inside its details window) → **Translate**. The description is shown in English in your game chat, marked `[Jelly PF]`, and in the Konnyaku Jelly log.
 
 ### 8. Commands
 
 | Command | What it does |
 |---|---|
-| `/jelly` | Open the Konnyaku Jelly window |
+| `/jelly` | Show or hide the Konnyaku Jelly window |
 | `/jelly <text>` | Translate into your outgoing language and copy it to the clipboard |
 | `/jelly /p <text>` | Translate and send to party right away. `/s`, `/fc`, `/a`, `/l1`, `/cwl1`, `/t Name@World` … also work |
-| `/konyakku` | Toggle the window |
-| `/konyakku config` | Open settings |
-| `/tazu` (or `/konyakku pf`) | Open the Party Finder page |
-| `/tazu filters` (or `/konyakku filters`) | Open the Filters page |
 
 These work well in macros, e.g. `/jelly /p Thanks for the run!`.
 
@@ -132,7 +113,6 @@ These work well in macros, e.g. `/jelly /p Thanks for the run!`.
   - Echo translations into game chat (`[Jelly]`).
   - Translate button next to the game's chat box.
   - Which channels to translate. Only Party (including cross-world party) and Alliance are on by default. Tick FC, Tells, LS and the others if you want them. Be careful with Shout and Yell: busy cities burn through your quota.
-- **Party Finder**: how long a listing stays after the game last sent it (default 15 minutes).
 - **Words**:
   - **FFXIV glossary**: each Japanese message is sent to the AI with the meanings of the FFXIV words in it (散開 = spread, 消化 = farm …), so slang translates correctly. The shared list is built in and updated from the Konnyaku Jelly glossary server at startup.
   - **My words**: add your own word and meaning. Yours replaces the shared meaning for the same word.

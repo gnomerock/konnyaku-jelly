@@ -8,18 +8,16 @@ using Dalamud.Interface.Windowing;
 
 namespace Konyakku.Windows;
 
-/// <summary>Shows translations, lets you write outgoing messages, translates pasted Japanese text, and lists Party Finder.</summary>
+/// <summary>Shows translations, lets you write outgoing messages and translates pasted Japanese text.</summary>
 internal sealed class LogWindow : Window
 {
     private const string PasteTarget = "English";
     private const float CollapsedWidth = 44f;
     private const float ExpandedWidth = 150f;
 
-    public enum Page { Chat, Paste, Listings, Filters }
+    public enum Page { Chat, Paste }
 
     private readonly Plugin plugin;
-    private readonly ListingsPage listingsPage;
-    private readonly FilterPage filterPage;
     private string input = string.Empty;
     private bool busy;
     private int lastScrolledVersion = -1;
@@ -44,18 +42,9 @@ internal sealed class LogWindow : Window
     public LogWindow(Plugin plugin) : base("Konnyaku Jelly###KonyakkuLog")
     {
         this.plugin = plugin;
-        listingsPage = new ListingsPage(plugin, () => page = Page.Filters);
-        filterPage = new FilterPage(plugin);
         Size = new Vector2(640, 420);
         SizeCondition = ImGuiCond.FirstUseEver;
         SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(400, 260), MaximumSize = new Vector2(4000, 4000) };
-    }
-
-    /// <summary>Opens the window on <paramref name="target"/>.</summary>
-    public void Show(Page target)
-    {
-        page = target;
-        IsOpen = true;
     }
 
     /// <summary>The size the window had when last drawn.</summary>
@@ -128,8 +117,6 @@ internal sealed class LogWindow : Window
             {
                 case Page.Chat: DrawChat(config); break;
                 case Page.Paste: DrawPaste(); break;
-                case Page.Listings: listingsPage.Draw(); break;
-                case Page.Filters: filterPage.Draw(); break;
             }
         }
         ImGui.EndChild();
@@ -206,10 +193,6 @@ internal sealed class LogWindow : Window
                 page = Page.Chat;
             if (NavItem("paste", FontAwesomeIcon.Paste, "Paste", "Translate pasted Japanese text", page == Page.Paste, showLabels))
                 page = Page.Paste;
-            if (NavItem("pf", FontAwesomeIcon.Users, "Party Finder", "Party Finder listings that match your filter", page == Page.Listings, showLabels))
-                page = Page.Listings;
-            if (NavItem("filters", FontAwesomeIcon.Filter, "Filters", "Make and edit Party Finder filters", page == Page.Filters, showLabels))
-                page = Page.Filters;
 
             // Pin the actions to the bottom of the sidebar.
             var row = ImGui.GetFrameHeight() * 1.3f;

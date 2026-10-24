@@ -1,6 +1,6 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
-    <Version>0.7.3.0</Version>
+    <Version>0.7.5.0</Version>
     <Description>real-time FFXIV chat translation powered by ChatGPT, Claude or Gemini.</Description>
     <IsPackable>false</IsPackable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

@@ -14,7 +14,6 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using Konyakku.PartyFinder;
 using Konyakku.Translation;
 using Konyakku.Windows;
 
@@ -32,18 +31,14 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
     [PluginService] internal static IContextMenu ContextMenu { get; private set; } = null!;
     [PluginService] internal static IPartyFinderGui PartyFinderGui { get; private set; } = null!;
-    [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
     [PluginService] internal static IGameGui GameGui { get; private set; } = null!;
 
-    private const string MainCommand = "/konyakku";
     private const string TranslateCommand = "/jelly";
-    private const string PartyFinderCommand = "/tazu";
 
     internal Configuration Config { get; }
     internal TranslationService Translator { get; }
     internal TermCollector Terms { get; }
     internal Glossary Glossary { get; }
-    internal ListingStore Listings { get; }
     /// <summary>Dalamud's default font with Thai merged in, for the jelly window.</summary>
     internal IFontHandle ChatFont { get; }
 
@@ -64,7 +59,6 @@ public sealed class Plugin : IDalamudPlugin
         Terms = new TermCollector(Config, PluginInterface.GetPluginConfigDirectory());
         Glossary = new Glossary(Config, PluginInterface.GetPluginConfigDirectory());
         Translator = new TranslationService(Config, Terms, Glossary);
-        Listings = new ListingStore(PartyFinderGui, DataManager);
         ChatFont = PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(BuildChatFont));
 
         configWindow = new ConfigWindow(this);
@@ -74,14 +68,6 @@ public sealed class Plugin : IDalamudPlugin
         edgeTab = new EdgeTab(this);
         chatBoxButton = new ChatBoxButton(this);
 
-        CommandManager.AddHandler(MainCommand, new CommandInfo(OnMainCommand)
-        {
-            HelpMessage = "Toggle the translation window. \"/konyakku config\" opens settings.",
-        });
-        CommandManager.AddHandler(PartyFinderCommand, new CommandInfo(OnPartyFinderCommand)
-        {
-            HelpMessage = "Open the Party Finder page of the Konnyaku Jelly window. \"/tazu filters\" edits filters.",
-        });
         CommandManager.AddHandler(TranslateCommand, new CommandInfo(OnTranslateCommand)
         {
             HelpMessage = "<text> — translate to your outgoing language and copy it. \"/jelly /p <text>\" translates and sends to party.",
@@ -97,14 +83,11 @@ public sealed class Plugin : IDalamudPlugin
     public void Dispose()
     {
         partyFinder.Dispose();
-        Listings.Dispose();
         ChatGui.ChatMessage -= OnChatMessage;
         PluginInterface.UiBuilder.Draw -= DrawUi;
         PluginInterface.UiBuilder.OpenConfigUi -= configWindow.Toggle;
         PluginInterface.UiBuilder.OpenMainUi -= logWindow.Toggle;
-        CommandManager.RemoveHandler(MainCommand);
         CommandManager.RemoveHandler(TranslateCommand);
-        CommandManager.RemoveHandler(PartyFinderCommand);
         windows.RemoveAllWindows();
         ChatFont.Dispose();
         Translator.Dispose();
@@ -163,34 +146,12 @@ public sealed class Plugin : IDalamudPlugin
         chatBoxButton.Draw();
     }
 
-    private void OnMainCommand(string command, string args)
-    {
-        switch (args.Trim().ToLowerInvariant())
-        {
-            case "config":
-                configWindow.Toggle();
-                break;
-            case "pf":
-                logWindow.Show(LogWindow.Page.Listings);
-                break;
-            case "filters":
-                logWindow.Show(LogWindow.Page.Filters);
-                break;
-            default:
-                logWindow.Toggle();
-                break;
-        }
-    }
-
-    private void OnPartyFinderCommand(string command, string args) =>
-        logWindow.Show(args.Trim().Equals("filters", StringComparison.OrdinalIgnoreCase) ? LogWindow.Page.Filters : LogWindow.Page.Listings);
-
     private void OnTranslateCommand(string command, string args)
     {
         var text = args.Trim();
         if (text.Length == 0)
         {
-            logWindow.IsOpen = true;
+            logWindow.Toggle();
             return;
         }
 

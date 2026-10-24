@@ -315,7 +315,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space
     <div class="grid3">
       <div class="card feature"><div class="emoji">💬</div><h3>Read chat</h3><p>Party and Alliance chat is translated into your language as it arrives. Add FC, Tells or Linkshells any time.</p></div>
       <div class="card feature"><div class="emoji">✍️</div><h3>Write chat</h3><p>Type in English, pick a channel, press Enter. It's sent in Japanese.</p></div>
-      <div class="card feature"><div class="emoji">🔎</div><h3>Party Finder</h3><p>Browse listings with your own filters, and read their descriptions in English.</p></div>
+      <div class="card feature"><div class="emoji">🔎</div><h3>Party Finder</h3><p>Right-click a listing in the game's Party Finder to read its description in English.</p></div>
     </div>
   </section>
 
@@ -339,7 +339,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space
 
   <section id="translator">
     <h2><span class="step">2</span>Choose who translates</h2>
-    <p class="sub">Open settings with <code>/konyakku config</code>, or click <b>Settings</b> in the window's sidebar. Pick one option on the <b>Translator</b> tab.</p>
+    <p class="sub">Open settings with <b>Settings</b> in the window's sidebar. Pick one option on the <b>Translator</b> tab.</p>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Option</th><th>You need</th><th>Cost</th></tr></thead>
@@ -381,8 +381,6 @@ codex login   <span class="c"># choose "Sign in with ChatGPT"</span></code><butt
           <span class="mock-nav brand"><i>«</i>Jelly</span>
           <span class="mock-nav on"><i>💬</i>Chat</span>
           <span class="mock-nav"><i>📋</i>Paste</span>
-          <span class="mock-nav"><i>👥</i>Party Finder</span>
-          <span class="mock-nav"><i>⏷</i>Filters</span>
           <span class="grow"></span>
           <span class="mock-nav ok"><i>⏸</i>Translating</span>
           <span class="mock-nav"><i>🗑</i>Clear log</span>
@@ -409,7 +407,7 @@ codex login   <span class="c"># choose "Sign in with ChatGPT"</span></code><butt
       </div>
       <div>
         <ul>
-          <li>The <b>sidebar</b> switches between <b>Chat</b> (translated chat and the message box), <b>Paste</b> (translate any text you copy), <b>Party Finder</b> and <b>Filters</b>. A red dot on Chat means new translations arrived while you were on another page.</li>
+          <li>The <b>sidebar</b> switches between <b>Chat</b> (translated chat and the message box) and <b>Paste</b> (translate any text you copy). A red dot on Chat means new translations arrived while you were on another page.</li>
           <li><b>Translating / Paused</b> at the bottom pauses and resumes chat translation. <b>Clear log</b> and <b>Settings</b> sit below it.</li>
           <li>Click <b>«</b> to collapse the sidebar to icons when you want more room, and <b>»</b> to expand it.</li>
         </ul>
@@ -487,34 +485,7 @@ codex login   <span class="c"># choose "Sign in with ChatGPT"</span></code><butt
 
   <section id="pf">
     <h2><span class="step">7</span>Party Finder</h2>
-    <p class="sub">Browse listings in the jelly window with your own filters, or translate one straight from the game's Party Finder.</p>
-    <div class="two">
-      <div class="mock" aria-label="The Party Finder page">
-        <div class="mock-title"><span>Konnyaku Jelly</span><span>✕</span></div>
-        <div class="mock-body">
-          <div class="mock-row"><span style="color:var(--yellow)">Party Finder</span><span class="mock-combo"><span>Room for my job</span><span>▾</span></span><span class="time">3 of 41 shown</span></div>
-          <div class="mock-log">
-            <div class="mock-line">
-              <span class="who">Aloalo Island</span><span class="badge" style="background:var(--yellow)">Loot</span><span class="time">6/8 · 2 for WHM</span>
-              <div class="tr">Farming the extreme mount, 1 healer wanted. Beginners welcome!</div>
-              <div class="orig">極マウント周回 ヒラ1募集 初見歓迎</div>
-            </div>
-            <div class="mock-line">
-              <span class="who">The Minstrel's Ballad: Endsinger's Aria</span><span class="badge" style="background:#ffd980">Practice</span><span class="time">7/8 · 1 for WHM</span>
-              <div class="orig">クリア目的 ギミック理解済みの方</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <ul>
-        <li>Click <b>Party Finder</b> in the sidebar, or type <code>/tazu</code>. It lists what the game has loaded, so open the game's Party Finder and browse the categories you care about first. Listings stay until they expire.</li>
-        <li>Pick a filter at the top. <b>Everything</b> and <b>Room for my job</b> come ready.</li>
-        <li>Hover a listing for the full description and open slots. <b>Right-click</b> to translate the description, or copy the leader's name.</li>
-        <li>Make filters on the <b>Filters</b> page (<code>/tazu filters</code>): duties, open slots for your job or jobs you pick, item level, objective, completion, data center, one player per job, beginners, password.</li>
-      </ul>
-    </div>
-    <h3>From the game's Party Finder</h3>
-    <p>Right-click a listing, or right-click inside its details window, and choose <b>Translate</b>.</p>
+    <p class="sub">Right-click a listing, or right-click inside its details window, and choose <b>Translate</b>.</p>
     <div class="two">
       <div>
         <div class="ff-menu">
@@ -536,12 +507,9 @@ codex login   <span class="c"># choose "Sign in with ChatGPT"</span></code><butt
       <table>
         <thead><tr><th>Command</th><th>What it does</th></tr></thead>
         <tbody>
-          <tr><td><code>/jelly</code></td><td>Open the Konnyaku Jelly window</td></tr>
+          <tr><td><code>/jelly</code></td><td>Show or hide the Konnyaku Jelly window</td></tr>
           <tr><td><code>/jelly &lt;text&gt;</code></td><td>Translate into your outgoing language and copy it to the clipboard</td></tr>
           <tr><td><code>/jelly /p &lt;text&gt;</code></td><td>Translate and send to party right away. <code>/s</code>, <code>/fc</code>, <code>/a</code>, <code>/l1</code>, <code>/cwl1</code> and <code>/t Name@World</code> work too</td></tr>
-          <tr><td><code>/konyakku</code></td><td>Show or hide the window</td></tr>
-          <tr><td><code>/konyakku config</code></td><td>Open settings</td></tr>
-          <tr><td><code>/tazu</code></td><td>Open the Party Finder page (<code>/tazu filters</code> for Filters)</td></tr>
         </tbody>
       </table>
     </div>
@@ -551,7 +519,7 @@ codex login   <span class="c"># choose "Sign in with ChatGPT"</span></code><butt
 
   <section id="settings">
     <h2><span class="step">9</span>Settings tour</h2>
-    <p class="sub"><code>/konyakku config</code> has six tabs.</p>
+    <p class="sub"><b>Settings</b> has five tabs.</p>
     <div class="two">
       <div class="card">
         <h3 style="margin-top:0">Translator</h3>
@@ -570,8 +538,6 @@ codex login   <span class="c"># choose "Sign in with ChatGPT"</span></code><butt
           <li>Translate button next to the game's chat box</li>
           <li>Which channels to translate</li>
         </ul>
-        <h3>Party Finder</h3>
-        <p>How long a listing stays after the game last sent it (default 15 minutes).</p>
         <h3>Words</h3>
         <p>Japanese messages are sent to the AI with the meanings of the FFXIV words in them (散開 = spread, 消化 = farm …), from a shared glossary and your own <b>My words</b> list. Your meaning wins for the same word.</p>
         <p><b>Collecting words</b> is off by default. If you agree, the plugin keeps a list of FFXIV words (散開, 消化, 野良 …) that the AI spots in Japanese chat you <b>receive</b> on public channels (Say, Shout, Yell, Party, Alliance, Novice Network, Party Finder), each with its meaning. It never keeps what you type, whole messages, names or times, never reads Tells, FC or linkshells, and the list stays on your PC.</p>
