@@ -91,7 +91,7 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>A translate button next to the game's chat input that rewrites what you typed in your outgoing language.</summary>
     public bool ShowChatBoxButton { get; set; } = true;
 
-    /// <summary>Only translate incoming chat while the Konnyaku Jelly window is open, to save tokens.</summary>
+    /// <summary>Only translate incoming chat while the Konyaku Jelly window is open, to save tokens.</summary>
     public bool TranslateOnlyWhenOpen { get; set; } = true;
 
     /// <summary>Opt-in: keep FFXIV words the AI spots in received Japanese chat (public channels only) in a local list.</summary>
@@ -102,6 +102,18 @@ public sealed class Configuration : IPluginConfiguration
 
     /// <summary>The player's own glossary words. They replace shared glossary entries with the same Japanese.</summary>
     public List<GlossaryTerm> MyTerms { get; set; } = [];
+
+    /// <summary>Dancing Mad (Ultimate): mark yourself with these commands. A command that doesn't start with "/" is skipped.</summary>
+    public bool DmuMarks { get; set; } = true;
+    /// <summary>P2 Path of Light: the headmarker you get for soaking the 3rd tower.</summary>
+    public string DmuP2Circle { get; set; } = "/mk stop <me>";
+    public string DmuP2Cone { get; set; } = "/mk bind <me>";
+    /// <summary>P3 Black Hole: First, Second and Third in Line (3, 3 and 2 players).</summary>
+    public string DmuP3First { get; set; } = "/mk attack <me>";
+    public string DmuP3Second { get; set; } = "/mk bind <me>";
+    public string DmuP3Third { get; set; } = "/mk stop <me>";
+    /// <summary>Show what your P4 debuffs ask of you, in a small overlay.</summary>
+    public bool DmuGuide { get; set; } = true;
 
     public int MaxLogEntries { get; set; } = 300;
     public string SendPrefix { get; set; } = "/p";

@@ -32,6 +32,10 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IContextMenu ContextMenu { get; private set; } = null!;
     [PluginService] internal static IPartyFinderGui PartyFinderGui { get; private set; } = null!;
     [PluginService] internal static IGameGui GameGui { get; private set; } = null!;
+    [PluginService] internal static IClientState ClientState { get; private set; } = null!;
+    [PluginService] internal static ICondition Condition { get; private set; } = null!;
+    [PluginService] internal static IGameInteropProvider GameInterop { get; private set; } = null!;
+    [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
 
     private const string TranslateCommand = "/jelly";
 
@@ -48,6 +52,7 @@ public sealed class Plugin : IDalamudPlugin
     private readonly EdgeTab edgeTab;
     private readonly ChatBoxButton chatBoxButton;
     private readonly PartyFinderTranslator partyFinder;
+    private readonly DancingMad dancingMad;
     private readonly object logLock = new();
     private readonly List<LogEntry> log = [];
     private string? pendingClipboard;
@@ -74,6 +79,7 @@ public sealed class Plugin : IDalamudPlugin
         });
 
         partyFinder = new PartyFinderTranslator(this, ContextMenu, PartyFinderGui);
+        dancingMad = new DancingMad(this);
         ChatGui.ChatMessage += OnChatMessage;
         PluginInterface.UiBuilder.Draw += DrawUi;
         PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
@@ -83,6 +89,7 @@ public sealed class Plugin : IDalamudPlugin
     public void Dispose()
     {
         partyFinder.Dispose();
+        dancingMad.Dispose();
         ChatGui.ChatMessage -= OnChatMessage;
         PluginInterface.UiBuilder.Draw -= DrawUi;
         PluginInterface.UiBuilder.OpenConfigUi -= configWindow.Toggle;
@@ -144,6 +151,7 @@ public sealed class Plugin : IDalamudPlugin
         windows.Draw();
         edgeTab.Draw();
         chatBoxButton.Draw();
+        dancingMad.Draw();
     }
 
     private void OnTranslateCommand(string command, string args)
@@ -181,7 +189,7 @@ public sealed class Plugin : IDalamudPlugin
         catch (Exception ex)
         {
             Log.Warning(ex, "Outgoing translation failed");
-            ChatGui.PrintError($"[Konnyaku Jelly] {ex.Message}");
+            ChatGui.PrintError($"[Konyaku Jelly] {ex.Message}");
             return null;
         }
     }

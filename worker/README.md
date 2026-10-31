@@ -1,4 +1,4 @@
-# Konnyaku Jelly glossary Worker
+# Konyaku Jelly glossary Worker
 
 A Cloudflare Worker in front of a D1 database. Players share FFXIV words they collected, and everyone downloads the reviewed glossary. The plugin never connects to D1 itself, and no Cloudflare token ships with it.
 

@@ -1,4 +1,4 @@
-// Konnyaku Jelly glossary API. The plugin never talks to D1 itself: this Worker holds the binding and only allows
+// Konyaku Jelly glossary API. The plugin never talks to D1 itself: this Worker holds the binding and only allows
 //   POST /v1/terms     players share words they collected (term + meaning only)
 //   GET  /v1/glossary  everyone downloads the reviewed glossary
 // Nothing identifying is stored: no IPs, and the install ID is only kept as a salted hash.

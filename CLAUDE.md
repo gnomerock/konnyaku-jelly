@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-**Konnyaku Jelly** (蒟蒻ゼリー) is a Dalamud plugin for FFXIV that translates in-game chat between English and Japanese using ChatGPT (via a Codex CLI login), the OpenAI API, Claude or Gemini. It is a single C# project, `Konyakku/` (`Dalamud.NET.Sdk`, .NET 10). There are no tests and no linter.
+**Konyaku Jelly** (蒟蒻ゼリー) is a Dalamud plugin for FFXIV that translates in-game chat between English and Japanese using ChatGPT (via a Codex CLI login), the OpenAI API, Claude or Gemini. It is a single C# project, `Konyakku/` (`Dalamud.NET.Sdk`, .NET 10). There are no tests and no linter.
 
 ## Commands
 
@@ -26,7 +26,7 @@ dotnet build Konyakku/Konyakku.csproj -c Release   # or `dotnet build -c Release
 
 ## Naming
 
-- The display name (`Name` in `Konyakku/Konyakku.json` and Gnomod's `repo.json`, window titles, chat prefixes) is "Konnyaku Jelly".
+- The display name (`Name` in `Konyakku/Konyakku.json` and Gnomod's `repo.json`, window titles, chat prefixes) is "Konyaku Jelly".
 - `InternalName`, the assembly, namespaces, the `Konyakku/` folder keep the old spelling on purpose. The GitHub repo is `gnomerock/konnyaku-jelly` (renamed from `konyakku`).
 - **Never change `InternalName`.** Dalamud would treat the plugin as new, and existing installs would lose their settings and updates.
 - ImGui window IDs (`###KonyakkuLog`, `###KonyakkuConfig`) must also stay stable, or saved window positions are lost.
@@ -70,11 +70,15 @@ dotnet build Konyakku/Konyakku.csproj -c Release   # or `dotnet build -c Release
   - Caches listing descriptions from `PartyFinderGui.ReceiveListing`.
   - Adds a **Translate** context-menu item in the `LookingForGroup`/`LookingForGroupDetail` addons. When the cache misses, it reads `AgentLookingForGroup.LastViewedListing`.
   - Echoes the result into game chat as `[Jelly PF]`.
+- **`DancingMad.cs`**: Dancing Mad (Ultimate, territory 1363) helper, ported from cactbot's `dancing_mad.ts` and Nainaiowo's DMU Helper.
+  - Hooks `ActionEffectHandler.Receive` (counts Kefka's `BABE` Path of Light casts) and `PacketDispatcher.HandleActorControlPacket` (headmarkers, category 34). The headmarker you get after the 3rd cast sends `DmuP2Circle`/`DmuP2Cone`.
+  - `Framework.Update` sends the P3 mark when you gain First/Second/Third in Line (3004–3006), and builds the P4 overlay from your statuses plus the real/fake tell (status 2056) on Neo Exdeath or Chaos, matched by `BNpcName` ID. Everything resets when combat ends.
+  - Marks go through `ChatSender` as `/mk` commands; the P4 overlay (`###KonyakkuDmu`) is drawn from `Plugin.DrawUi`.
 - **`Windows/`**:
   - `LogWindow` is "the jelly window". A collapsible sidebar (`NavItem` rows, eased width, `Config.SidebarCollapsed`) switches between the Chat page (log plus composer) and the Paste page, and holds Pause/Resume, Clear log and Settings. The unread dot and auto-scroll compare against `Plugin.LogVersion`, because the log's length stops changing once it's full.
   - `EdgeTab` is not a `Window`. It's drawn every frame from `Plugin.DrawUi`: an always-visible vertical "Jelly" tab at `EdgeTab.Top()`, which toggles `LogWindow` (`Config.ShowEdgeTab`). It's dragged by hand (the ImGui window is `NoMove`): dropped within `SnapDistance` of the left or right screen edge it sticks there (`Config.TabEdge`, `TabY` as a fraction of the screen height). Dropped anywhere else, it previews and then opens `LogWindow` as a normal window at that spot (`LogWindow.OpenAt`, `Config.Detached`); the tab itself always stays on an edge. While dragged, the shape trails the grab point on a damped spring (`Wobble`/`Jelly`), drawn as a bent polygon with the clip rect widened to the screen. While `EdgeTab.Docked()` (`DockToEdge` on and not `Detached`), `LogWindow.PreDraw` pins the window to that edge at the same height as a drawer (`NoMove`, slides in on `OnOpen`). The tab hides while a docked or detached window is open. `LogWindow.TrackDocking` docks a detached window again when it's dragged with the mouse at a screen edge.
   - `ChatBoxButton`, also drawn from `Plugin.DrawUi`, is a translate button just right of the game's chat input. `ChatLog` has no named field for the input, so it's found by component type (`ComponentType.TextInput`) and positioned from its node's screen coordinates. A click reads `RawString`, keeps a leading channel command (`SplitCommand`), translates into `OutgoingTarget` and writes the result back with `SetText` on the framework thread, unless the input changed meanwhile (then it's copied instead). `Config.ShowChatBoxButton`.
-  - `ConfigWindow` has the Translator, Languages, Chat, Words and Look tabs.
+  - `ConfigWindow` has the Translator, Languages, Chat, Words, Look and DMU tabs.
   - `Theme` holds the blue/white/red/yellow palette and shared widgets: `PrimaryButton`, `Badge`, and `Tooltip`, which also works on disabled items.
   - Dalamud's default font has no Thai, so `Plugin.ChatFont` merges Leelawadee UI or Tahoma from the Windows font folder into it. `LogWindow` and the Words table push it. Thai (`Language.Incoming` only) is never echoed into game chat, because the game's font can't draw it.
   - Translations finish on background tasks while the UI reads them from the draw loop. Clipboard writes are queued through `Plugin.CopyToClipboard` and applied in `DrawUi`, because ImGui calls must happen on the draw thread.

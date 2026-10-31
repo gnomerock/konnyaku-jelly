@@ -1,17 +1,17 @@
-# Konnyaku Jelly
+# Konyaku Jelly
 
-<img src="Konyakku/images/icon.png" alt="Konnyaku Jelly icon" width="96" align="right">
+<img src="Konyakku/images/icon.png" alt="Konyaku Jelly icon" width="96" align="right">
 
 Dalamud plugin for FFXIV that translates chat with ChatGPT, Claude or Gemini.
 
 **📖 Illustrated tutorial: https://gnomerock.github.io/konnyaku-jelly/**
 
-- **Read chat**: Party and Alliance chat (plus FC, Tells, LS, CWLS … if you turn them on) is translated into your language (default: English) and shown in the Konnyaku Jelly window.
+- **Read chat**: Party and Alliance chat (plus FC, Tells, LS, CWLS … if you turn them on) is translated into your language (default: English) and shown in the Konyaku Jelly window.
 - **Write chat**: type in your own language, pick a channel from the **To** dropdown, and it goes out translated (default: Japanese).
 - **Paste**: translate any Japanese text you copied, e.g. from a website or a Discord message.
 - **Party Finder**: right-click a listing in the game's Party Finder → **Translate**.
 - **Saves tokens**: by default chat is only translated while the window is open.
-- Languages: English and Japanese both ways. Chat you read can also be translated into Thai. It shows in the Konnyaku Jelly window, not in game chat, because the game's font has no Thai letters.
+- Languages: English and Japanese both ways. Chat you read can also be translated into Thai. It shows in the Konyaku Jelly window, not in game chat, because the game's font has no Thai letters.
 
 ---
 
@@ -25,7 +25,7 @@ Dalamud plugin for FFXIV that translates chat with ChatGPT, Claude or Gemini.
    https://raw.githubusercontent.com/gnomerock/Gnomod/main/repo.json
    ```
    tick **Enabled**, click **+**, then **Save and Close**.
-3. Type `/xlplugins` → **All Plugins** → search for **Konnyaku Jelly** → **Install**.
+3. Type `/xlplugins` → **All Plugins** → search for **Konyaku Jelly** → **Install**.
 
 ### 2. Choose who translates
 
@@ -88,13 +88,13 @@ Click **Paste** in the sidebar, paste Japanese text (Ctrl+V or the **Paste** but
 
 ### 7. Party Finder
 
-In the game's Party Finder, right-click a listing (or inside its details window) → **Translate**. The description is shown in English in your game chat, marked `[Jelly PF]`, and in the Konnyaku Jelly log.
+In the game's Party Finder, right-click a listing (or inside its details window) → **Translate**. The description is shown in English in your game chat, marked `[Jelly PF]`, and in the Konyaku Jelly log.
 
 ### 8. Commands
 
 | Command | What it does |
 |---|---|
-| `/jelly` | Show or hide the Konnyaku Jelly window |
+| `/jelly` | Show or hide the Konyaku Jelly window |
 | `/jelly <text>` | Translate into your outgoing language and copy it to the clipboard |
 | `/jelly /p <text>` | Translate and send to party right away. `/s`, `/fc`, `/a`, `/l1`, `/cwl1`, `/t Name@World` … also work |
 
@@ -114,7 +114,7 @@ These work well in macros, e.g. `/jelly /p Thanks for the run!`.
   - Translate button next to the game's chat box.
   - Which channels to translate. Only Party (including cross-world party) and Alliance are on by default. Tick FC, Tells, LS and the others if you want them. Be careful with Shout and Yell: busy cities burn through your quota.
 - **Words**:
-  - **FFXIV glossary**: each Japanese message is sent to the AI with the meanings of the FFXIV words in it (散開 = spread, 消化 = farm …), so slang translates correctly. The shared list is built in and updated from the Konnyaku Jelly glossary server at startup.
+  - **FFXIV glossary**: each Japanese message is sent to the AI with the meanings of the FFXIV words in it (散開 = spread, 消化 = farm …), so slang translates correctly. The shared list is built in and updated from the Konyaku Jelly glossary server at startup.
   - **My words**: add your own word and meaning. Yours replaces the shared meaning for the same word.
 - **Collecting words** (also on the Words tab): off by default. If you agree, the plugin keeps a list of FFXIV words (散開, 消化, 野良 …) that the AI spots in Japanese chat you receive, with each word's meaning and how often it was seen.
   - Words only come from Say, Shout, Yell, Party, Alliance, Novice Network and Party Finder, never from Tells, FC, linkshells or PvP teams.
@@ -122,6 +122,9 @@ These work well in macros, e.g. `/jelly /p Thanks for the run!`.
   - The list stays on your PC (`collected-terms.json` in the plugin config folder). You can delete single words, clear the list (hold Ctrl), or **Copy list** as JSON. The **+** button moves a collected word into My words, where your meaning is used from then on.
   - **Share** sends the ticked words to the shared glossary, after a preview of exactly what will be sent: each word, its meaning, and a random ID for your install, so the server counts each player once. No messages, names, worlds, channels, times or counts are sent, and the server doesn't keep your IP address. Words several players share are reviewed and added to the glossary everyone downloads.
 - **Look**: the blue & white theme (turn it off to use your Dalamud style) and how many lines the log keeps.
+- **DMU** (Dancing Mad Ultimate only):
+  - **Mark myself**: sends a marker command for you, as if typed. P2 Path of Light, after soaking the 3rd tower: `/mk stop <me>` for the circle, `/mk bind <me>` for the cone. P3 Black Hole: `/mk attack <me>`, `/mk bind <me>` and `/mk stop <me>` for First, Second and Third in Line. Each command can be changed.
+  - **Show what my P4 debuffs mean**: a small overlay with what to do for each of your P4 debuffs (real or fake, which Flood side). Drag it where you like.
 
 ### Tips and troubleshooting
 
@@ -165,6 +168,6 @@ git tag v0.4.0.0
 git push origin v0.4.0.0
 ```
 
-GitHub Actions builds the tagged commit, creates the release with `latest.zip`, and updates the Konnyaku Jelly entry in [gnomerock/Gnomod](https://github.com/gnomerock/Gnomod)'s `repo.json`, so the update shows up in `/xlplugins`. This needs a `GNOMOD_TOKEN` secret in this repo that can write to Gnomod.
+GitHub Actions builds the tagged commit, creates the release with `latest.zip`, and updates the Konyaku Jelly entry in [gnomerock/Gnomod](https://github.com/gnomerock/Gnomod)'s `repo.json`, so the update shows up in `/xlplugins`. This needs a `GNOMOD_TOKEN` secret in this repo that can write to Gnomod.
 
 The tutorial site is `docs/index.html`, served by GitHub Pages from the `docs` folder on `main`.

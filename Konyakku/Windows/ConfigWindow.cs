@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Konyakku.Translation;
 
@@ -39,7 +40,7 @@ internal sealed class ConfigWindow : Window
     private string shareResult = string.Empty;
     private const string SharePopup = "Share words with everyone###KonyakkuShare";
 
-    public ConfigWindow(Plugin plugin) : base("Konnyaku Jelly Settings###KonyakkuConfig")
+    public ConfigWindow(Plugin plugin) : base("Konyaku Jelly Settings###KonyakkuConfig")
     {
         this.plugin = plugin;
         Size = new Vector2(500, 480);
@@ -62,6 +63,7 @@ internal sealed class ConfigWindow : Window
             if (ImGui.BeginTabItem("  Chat  ")) { changed |= DrawChat(c); ImGui.EndTabItem(); }
             if (ImGui.BeginTabItem("  Words  ")) { changed |= DrawWords(c); ImGui.EndTabItem(); }
             if (ImGui.BeginTabItem("  Look  ")) { changed |= DrawLook(c); ImGui.EndTabItem(); }
+            if (ImGui.BeginTabItem("  DMU  ")) { changed |= DrawDmu(c); ImGui.EndTabItem(); }
             ImGui.EndTabBar();
         }
 
@@ -141,7 +143,7 @@ internal sealed class ConfigWindow : Window
         ImGuiComponents.HelpMarker("Other players' messages are translated into this language.");
         changed |= Combo("Messages I send", Language.All, c.OutgoingTarget, v => c.OutgoingTarget = v);
         ImGui.SameLine();
-        ImGuiComponents.HelpMarker("What you type in the Konnyaku Jelly window or with /jelly is translated into this language.");
+        ImGuiComponents.HelpMarker("What you type in the Konyaku Jelly window or with /jelly is translated into this language.");
 
         ImGui.Spacing();
         Heading("Custom prompt");
@@ -160,14 +162,14 @@ internal sealed class ConfigWindow : Window
     {
         var changed = false;
         Heading("Chat");
-        changed |= Checkbox("Only translate chat while the Konnyaku Jelly window is open", c.TranslateOnlyWhenOpen, v => c.TranslateOnlyWhenOpen = v);
+        changed |= Checkbox("Only translate chat while the Konyaku Jelly window is open", c.TranslateOnlyWhenOpen, v => c.TranslateOnlyWhenOpen = v);
         ImGui.SameLine();
         ImGuiComponents.HelpMarker("Saves tokens: messages that arrive while the window is closed are not translated. Open it with /jelly.");
         changed |= Checkbox("Skip my own messages", c.SkipOwnMessages, v => c.SkipOwnMessages = v);
         changed |= Checkbox("Show the original text under each translation", c.ShowOriginal, v => c.ShowOriginal = v);
         changed |= Checkbox("Also echo translations into game chat", c.EchoToGameChat, v => c.EchoToGameChat = v);
         if (c.EchoToGameChat && c.IncomingTarget == "Thai")
-            ImGui.TextColored(Theme.Warn, "Thai isn't echoed: the game's chat font has no Thai letters. Read it in the Konnyaku Jelly window.");
+            ImGui.TextColored(Theme.Warn, "Thai isn't echoed: the game's chat font has no Thai letters. Read it in the Konyaku Jelly window.");
         changed |= Checkbox("Translate button next to the game's chat box", c.ShowChatBoxButton, v => c.ShowChatBoxButton = v);
         ImGui.SameLine();
         ImGuiComponents.HelpMarker("Type in the game's chat box, then click the button: what you typed is replaced with its translation (Write in), ready to send with Enter. A channel command such as /p stays as typed.");
@@ -346,7 +348,7 @@ internal sealed class ConfigWindow : Window
         ImGui.SetNextWindowSize(new Vector2(420, 0), ImGuiCond.Appearing);
         if (!ImGui.BeginPopupModal(SharePopup)) return;
 
-        ImGui.TextWrapped($"These {words.Length} words and meanings will be sent to the Konnyaku Jelly glossary server. When several players share the same word, it's reviewed and added to the glossary everyone uses.");
+        ImGui.TextWrapped($"These {words.Length} words and meanings will be sent to the Konyaku Jelly glossary server. When several players share the same word, it's reviewed and added to the glossary everyone uses.");
         ImGui.Spacing();
         if (ImGui.BeginChild("##sharelist", new Vector2(-1, Math.Min(200, 24 * words.Length + 8)), true))
         {
@@ -393,7 +395,7 @@ internal sealed class ConfigWindow : Window
         ImGuiComponents.HelpMarker("Turn off to use your normal Dalamud style.");
         changed |= Checkbox("Show the Jelly tab", c.ShowEdgeTab, v => c.ShowEdgeTab = v);
         ImGui.SameLine();
-        ImGuiComponents.HelpMarker("A small vertical tab that opens or hides the Konnyaku Jelly window. Drag it along the left or right edge of the screen to move it, or drag it out onto the screen to turn it into a normal window there.");
+        ImGuiComponents.HelpMarker("A small vertical tab that opens or hides the Konyaku Jelly window. Drag it along the left or right edge of the screen to move it, or drag it out onto the screen to turn it into a normal window there.");
         if (c.ShowEdgeTab && (c.TabEdge != TabEdge.Left || c.Detached))
         {
             ImGui.SameLine();
@@ -412,6 +414,38 @@ internal sealed class ConfigWindow : Window
         ImGui.SetNextItemWidth(FieldWidth);
         if (ImGui.SliderInt("Lines kept in the log", ref max, 50, 1000)) { c.MaxLogEntries = max; changed = true; }
         return changed;
+    }
+
+    private static bool DrawDmu(Configuration c)
+    {
+        var changed = false;
+        Heading("Dancing Mad (Ultimate)");
+        changed |= Checkbox("Mark myself", c.DmuMarks, v => c.DmuMarks = v);
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("Sends these commands for you, as if typed, at the moment you get the debuff or marker. Only inside Dancing Mad.");
+        using (ImRaii.Disabled(!c.DmuMarks))
+        {
+            ImGui.TextDisabled("P2 Path of Light, after soaking the 3rd tower");
+            changed |= CommandInput("Circle (spread)", c.DmuP2Circle, v => c.DmuP2Circle = v);
+            changed |= CommandInput("Cone", c.DmuP2Cone, v => c.DmuP2Cone = v);
+            ImGui.TextDisabled("P3 Black Hole");
+            changed |= CommandInput("First in Line", c.DmuP3First, v => c.DmuP3First = v);
+            changed |= CommandInput("Second in Line", c.DmuP3Second, v => c.DmuP3Second = v);
+            changed |= CommandInput("Third in Line", c.DmuP3Third, v => c.DmuP3Third = v);
+        }
+        ImGui.Spacing();
+        changed |= Checkbox("Show what my P4 debuffs mean", c.DmuGuide, v => c.DmuGuide = v);
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("A small overlay with what to do for each of your P4 debuffs, real or fake. Drag it where you like.");
+        return changed;
+    }
+
+    private static bool CommandInput(string label, string value, Action<string> set)
+    {
+        ImGui.SetNextItemWidth(FieldWidth);
+        if (!ImGui.InputTextWithHint(label, "/mk stop <me>", ref value, 100)) return false;
+        set(value);
+        return true;
     }
 
     private void RunTest()

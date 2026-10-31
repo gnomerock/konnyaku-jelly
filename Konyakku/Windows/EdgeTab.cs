@@ -136,7 +136,7 @@ internal sealed class EdgeTab(Plugin plugin)
             DrawTab(draw, edge, pos, size, hovered || dragging, open, scale, 1 - morph * 0.7f);
             draw.PopClipRect();
 
-            if (hovered && !dragging) ImGui.SetTooltip((open ? "Hide Konnyaku Jelly" : "Open Konnyaku Jelly") + "\nDrag it along the edge to move it, or out onto the screen to make it a normal window.");
+            if (hovered && !dragging) ImGui.SetTooltip((open ? "Hide Konyaku Jelly" : "Open Konyaku Jelly") + "\nDrag it along the edge to move it, or out onto the screen to make it a normal window.");
             if (clicked && !dragging) plugin.ToggleMainWindow();
         }
         ImGui.End();
@@ -226,7 +226,7 @@ internal sealed class EdgeTab(Plugin plugin)
 
         if (size.X > 160 * scale)
         {
-            var text = "Konnyaku Jelly";
+            var text = "Konyaku Jelly";
             var at = Jelly(pos + new Vector2(10 * scale, (title - ImGui.GetTextLineHeight()) / 2));
             draw.AddText(at, ImGui.GetColorU32(Theme.White with { W = morph }), text);
         }

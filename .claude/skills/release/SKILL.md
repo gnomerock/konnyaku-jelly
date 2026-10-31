@@ -1,10 +1,10 @@
 ---
 name: release
-description: Commit the current changes, push to main, and release a new Konnyaku Jelly version (bump the csproj Version, tag, watch the release workflow, check Gnomod). Use when the user asks to commit/push/release or ship a version.
+description: Commit the current changes, push to main, and release a new Konyaku Jelly version (bump the csproj Version, tag, watch the release workflow, check Gnomod). Use when the user asks to commit/push/release or ship a version.
 argument-hint: "[version, e.g. 0.7.1.0 | patch | minor]"
 ---
 
-# Release Konnyaku Jelly
+# Release Konyaku Jelly
 
 Commit everything, push `main`, tag a new version and confirm that it reached players. `$ARGUMENTS` may be an exact 4-part version (`0.7.1.0`), `patch` (third part +1, the default) or `minor` (second part +1, third reset to 0). The fourth part stays `0`.
 

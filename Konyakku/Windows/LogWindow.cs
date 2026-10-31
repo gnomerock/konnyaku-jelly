@@ -39,7 +39,7 @@ internal sealed class LogWindow : Window
     private string pasteResult = string.Empty;
     private bool pasteBusy;
 
-    public LogWindow(Plugin plugin) : base("Konnyaku Jelly###KonyakkuLog")
+    public LogWindow(Plugin plugin) : base("Konyaku Jelly###KonyakkuLog")
     {
         this.plugin = plugin;
         Size = new Vector2(640, 420);
@@ -145,7 +145,7 @@ internal sealed class LogWindow : Window
             var x = e == TabEdge.Left ? viewport.Pos.X : viewport.Pos.X + viewport.Size.X - bar;
             var draw = ImGui.GetForegroundDrawList();
             draw.AddRectFilled(new Vector2(x, pos.Y), new Vector2(x + bar, pos.Y + size.Y), ImGui.GetColorU32(Theme.Yellow));
-            if (down) ImGui.SetTooltip("Let go to dock Konnyaku Jelly to this edge");
+            if (down) ImGui.SetTooltip("Let go to dock Konyaku Jelly to this edge");
         }
         if (!down)
         {
