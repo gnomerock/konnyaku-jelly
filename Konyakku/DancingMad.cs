@@ -169,7 +169,7 @@ internal sealed unsafe class DancingMad : IDisposable
     private void OnActorControl(uint entityId, uint category, uint arg1, uint arg2, uint arg3, uint arg4, uint arg5, uint arg6, uint arg7, uint arg8, GameObjectId targetId, bool isRecorded)
     {
         actorControlHook.Original(entityId, category, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, targetId, isRecorded);
-        if (category != HeadMarkerCategory || towersResolved != 3 || !InDmu || !plugin.Config.DmuP2Marks) return;
+        if (category != HeadMarkerCategory || towersResolved != 3 || !InDmu || !plugin.Config.DmuEnabled || !plugin.Config.DmuP2Marks) return;
         if (entityId != Plugin.ObjectTable.LocalPlayer?.EntityId) return;
         if (arg1 == SpreadMarker) QueueMark(plugin.Config.DmuP2Circle);
         else if (arg1 == ConeMarker) QueueMark(plugin.Config.DmuP2Cone);
@@ -180,7 +180,7 @@ internal sealed unsafe class DancingMad : IDisposable
         SendDueMarks();
 
         var me = Plugin.ObjectTable.LocalPlayer;
-        if (!InDmu || me == null || !Plugin.Condition[ConditionFlag.InCombat])
+        if (!plugin.Config.DmuEnabled || !InDmu || me == null || !Plugin.Condition[ConditionFlag.InCombat])
         {
             Reset();
             return;
@@ -363,7 +363,7 @@ internal sealed unsafe class DancingMad : IDisposable
     /// <summary>The overlay. Drag it anywhere; ImGui remembers where.</summary>
     public void Draw()
     {
-        var o = Preview ? PreviewOverlay : overlay;
+        var o = !plugin.Config.DmuEnabled ? Overlay.Empty : Preview ? PreviewOverlay : overlay;
         if (o.IsEmpty) return;
         var viewport = ImGui.GetMainViewport();
         ImGui.SetNextWindowPos(viewport.Pos + viewport.Size * new Vector2(0.5f, 0.22f), ImGuiCond.FirstUseEver, new Vector2(0.5f, 0));

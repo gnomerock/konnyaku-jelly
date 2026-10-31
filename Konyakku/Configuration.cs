@@ -105,6 +105,8 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>The player's own glossary words. They replace shared glossary entries with the same Japanese.</summary>
     public List<GlossaryTerm> MyTerms { get; set; } = [];
 
+    /// <summary>Master switch for every Dancing Mad (Ultimate) feature: marks and overlay.</summary>
+    public bool DmuEnabled { get; set; } = true;
     /// <summary>Legacy (0.7.6): one switch for both DMU marks. Read once by <see cref="Normalize"/>.</summary>
     public bool DmuMarks { get; set; } = true;
     /// <summary>Dancing Mad (Ultimate): mark yourself with these commands. A command that doesn't start with "/" is skipped.</summary>
@@ -117,12 +119,12 @@ public sealed class Configuration : IPluginConfiguration
     public int DmuDelayMinMs { get; set; } = 300;
     public int DmuDelayMaxMs { get; set; } = 800;
     /// <summary>P2 Path of Light: the headmarker you get for soaking the 3rd tower.</summary>
-    public string DmuP2Circle { get; set; } = "/mk stop <me>";
+    public string DmuP2Circle { get; set; } = "/mk ignore <me>";
     public string DmuP2Cone { get; set; } = "/mk bind <me>";
     /// <summary>P3 Black Hole: First, Second and Third in Line (3, 3 and 2 players).</summary>
     public string DmuP3First { get; set; } = "/mk attack <me>";
     public string DmuP3Second { get; set; } = "/mk bind <me>";
-    public string DmuP3Third { get; set; } = "/mk stop <me>";
+    public string DmuP3Third { get; set; } = "/mk ignore <me>";
     /// <summary>Show which Black Hole tether to grab and when, in the overlay.</summary>
     public bool DmuP3Guide { get; set; } = true;
     /// <summary>"Standard" or "Fae" (Fae swaps the DPS and support tethers).</summary>
@@ -157,11 +159,19 @@ public sealed class Configuration : IPluginConfiguration
         // Version 6 split the DMU marks into P2 and P3 switches.
         if (Version < 6 && !DmuMarks) DmuP2Marks = DmuP3Marks = false;
         if (DmuBlackHoleStrategy != "Fae") DmuBlackHoleStrategy = "Standard";
+        // 0.7.6–0.7.9 defaulted to "/mk stop", which isn't a sign: the stop-sign marker is "ignore".
+        DmuP2Circle = FixStopSign(DmuP2Circle);
+        DmuP2Cone = FixStopSign(DmuP2Cone);
+        DmuP3First = FixStopSign(DmuP3First);
+        DmuP3Second = FixStopSign(DmuP3Second);
+        DmuP3Third = FixStopSign(DmuP3Third);
         DmuMarkDelayMs = Math.Clamp(DmuMarkDelayMs, 0, MaxDmuDelayMs);
         DmuDelayMinMs = Math.Clamp(DmuDelayMinMs, 0, MaxDmuDelayMs);
         DmuDelayMaxMs = Math.Clamp(DmuDelayMaxMs, DmuDelayMinMs, MaxDmuDelayMs);
         Version = 6;
     }
+
+    private static string FixStopSign(string command) => command.Replace("/mk stop", "/mk ignore", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Older versions stored free text such as "/t Name@World"; split it into a dropdown channel and a tell target.</summary>
     private void NormalizeSendPrefix()

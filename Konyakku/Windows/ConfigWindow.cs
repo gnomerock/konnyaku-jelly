@@ -423,15 +423,18 @@ internal sealed class ConfigWindow : Window
     {
         var changed = false;
         Heading("Dancing Mad (Ultimate)");
-        ImGui.TextDisabled("Marks are sent for you, as if typed, when you get the marker or debuff. Only inside Dancing Mad.");
-        changed |= Checkbox("Humanize (random delay)", c.DmuHumanize, v => c.DmuHumanize = v);
+        changed |= Checkbox("Enable DMU helper", c.DmuEnabled, v => c.DmuEnabled = v);
         ImGui.SameLine();
-        ImGuiComponents.HelpMarker("Wait a random time between Min and Max before each mark, instead of the same delay every time. Test sends a command now (after the delay), anywhere, so you can check it.");
-        ImGui.SetNextItemWidth(FieldWidth);
+        ImGuiComponents.HelpMarker("Turns every Dancing Mad feature below on or off. They only work inside Dancing Mad.");
+        using var disabled = ImRaii.Disabled(!c.DmuEnabled);
+
+        ImGui.Spacing();
+        Heading("Auto-mark delay");
         if (c.DmuHumanize)
         {
             int min = c.DmuDelayMinMs, max = c.DmuDelayMaxMs;
-            if (ImGui.DragIntRange2("Delay range", ref min, ref max, 5f, 0, Configuration.MaxDmuDelayMs, "Min %d ms", "Max %d ms"))
+            ImGui.SetNextItemWidth(FieldWidth);
+            if (ImGui.DragIntRange2("Delay", ref min, ref max, 5f, 0, Configuration.MaxDmuDelayMs, "Min %d ms", "Max %d ms"))
             {
                 c.DmuDelayMinMs = Math.Clamp(min, 0, Configuration.MaxDmuDelayMs);
                 c.DmuDelayMaxMs = Math.Clamp(max, c.DmuDelayMinMs, Configuration.MaxDmuDelayMs);
@@ -441,53 +444,64 @@ internal sealed class ConfigWindow : Window
         else
         {
             var delay = c.DmuMarkDelayMs;
-            if (ImGui.SliderInt("Delay before marking", ref delay, 0, Configuration.MaxDmuDelayMs, "%d ms")) { c.DmuMarkDelayMs = delay; changed = true; }
+            ImGui.SetNextItemWidth(FieldWidth);
+            if (ImGui.SliderInt("Delay", ref delay, 0, Configuration.MaxDmuDelayMs, "%d ms")) { c.DmuMarkDelayMs = delay; changed = true; }
         }
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("How long to wait before placing a mark.");
+        changed |= Checkbox("Random delay", c.DmuHumanize, v => c.DmuHumanize = v);
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("Wait a different time between Min and Max for each mark, so it looks like you typed it.");
 
         ImGui.Spacing();
-        Heading("P2 Path of Light");
-        changed |= Checkbox("Mark myself after soaking the 3rd tower", c.DmuP2Marks, v => c.DmuP2Marks = v);
+        Heading("P2 · Path of Light");
+        changed |= Checkbox("Enable P2 auto-mark", c.DmuP2Marks, v => c.DmuP2Marks = v);
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("After you soak the 3rd tower, marks you by the marker you get. Test sends the command now so you can check it.");
         using (ImRaii.Disabled(!c.DmuP2Marks))
         {
-            changed |= CommandInput("Circle (spread)", c.DmuP2Circle, v => c.DmuP2Circle = v);
+            changed |= CommandInput("Circle", c.DmuP2Circle, v => c.DmuP2Circle = v);
             changed |= CommandInput("Cone", c.DmuP2Cone, v => c.DmuP2Cone = v);
         }
 
         ImGui.Spacing();
-        Heading("P3 Black Hole");
-        changed |= Checkbox("Mark myself by my In Line debuff", c.DmuP3Marks, v => c.DmuP3Marks = v);
+        Heading("P3 · Black Hole");
+        changed |= Checkbox("Enable P3 auto-mark", c.DmuP3Marks, v => c.DmuP3Marks = v);
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("Marks you by your First, Second or Third in Line debuff. Test sends the command now so you can check it.");
         using (ImRaii.Disabled(!c.DmuP3Marks))
         {
-            changed |= CommandInput("First in Line", c.DmuP3First, v => c.DmuP3First = v);
-            changed |= CommandInput("Second in Line", c.DmuP3Second, v => c.DmuP3Second = v);
-            changed |= CommandInput("Third in Line", c.DmuP3Third, v => c.DmuP3Third = v);
+            changed |= CommandInput("1st in Line", c.DmuP3First, v => c.DmuP3First = v);
+            changed |= CommandInput("2nd in Line", c.DmuP3Second, v => c.DmuP3Second = v);
+            changed |= CommandInput("3rd in Line", c.DmuP3Third, v => c.DmuP3Third = v);
         }
-        changed |= Checkbox("Show which tether to grab", c.DmuP3Guide, v => c.DmuP3Guide = v);
+        changed |= Checkbox("Enable P3 tether helper", c.DmuP3Guide, v => c.DmuP3Guide = v);
         ImGui.SameLine();
-        ImGuiComponents.HelpMarker("The overlay shows your Black Hole role (First/Second/Third in Line, DPS, Support or Accretion) and your current and next tether, counted from when you get your In Line debuff.");
+        ImGuiComponents.HelpMarker("Shows your role and which tether to grab next.");
         using (ImRaii.Disabled(!c.DmuP3Guide))
             changed |= Combo("Strategy", BlackHoleStrategies, c.DmuBlackHoleStrategy, v => c.DmuBlackHoleStrategy = v);
         ImGui.SameLine();
-        ImGuiComponents.HelpMarker("Fae swaps which tethers DPS and supports grab.");
+        ImGuiComponents.HelpMarker("Fae swaps the DPS and support tethers.");
 
         ImGui.Spacing();
-        Heading("P4");
-        changed |= Checkbox("Show what my P4 debuffs mean", c.DmuGuide, v => c.DmuGuide = v);
+        Heading("P4 · Debuffs");
+        changed |= Checkbox("Enable P4 debuff helper", c.DmuGuide, v => c.DmuGuide = v);
         ImGui.SameLine();
-        ImGuiComponents.HelpMarker("The overlay says what to do for each of your P4 debuffs, real or fake.");
+        ImGuiComponents.HelpMarker("Shows each of your debuffs with what to do: stack or spread, move or stop, which side to go.");
 
         ImGui.Spacing();
+        ImGui.Separator();
         var preview = plugin.DancingMad.Preview;
-        if (ImGui.Checkbox("Show an example overlay", ref preview)) plugin.DancingMad.Preview = preview;
+        if (ImGui.Checkbox("Show example overlay", ref preview)) plugin.DancingMad.Preview = preview;
         ImGui.SameLine();
-        ImGuiComponents.HelpMarker("Shows sample lines so you can drag the overlay where you want it. Turns off when you close Settings.");
+        ImGuiComponents.HelpMarker("Shows a sample so you can drag the overlay into place. Turns off when you close Settings.");
         return changed;
     }
 
     private bool CommandInput(string label, string value, Action<string> set)
     {
         ImGui.SetNextItemWidth(FieldWidth);
-        var changed = ImGui.InputTextWithHint($"##{label}", "/mk stop <me>", ref value, 100);
+        var changed = ImGui.InputTextWithHint($"##{label}", "/mk ignore <me>", ref value, 100);
         if (changed) set(value);
         ImGui.SameLine();
         if (ImGui.SmallButton($"Test##{label}")) plugin.DancingMad.QueueMark(value);
