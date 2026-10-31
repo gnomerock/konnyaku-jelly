@@ -131,6 +131,9 @@ public sealed class Plugin : IDalamudPlugin
 
     internal void OpenConfig() => configWindow.IsOpen = true;
 
+    /// <summary>The DMU overlay shows sample lines, for placing it.</summary>
+    internal bool DmuPreview { get => dancingMad.Preview; set => dancingMad.Preview = value; }
+
     internal bool IsMainWindowOpen => logWindow.IsOpen;
 
     internal void ToggleMainWindow() => logWindow.Toggle();

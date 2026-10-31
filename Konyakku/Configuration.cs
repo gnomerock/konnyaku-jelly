@@ -35,7 +35,7 @@ public static class ProviderModels
 [Serializable]
 public sealed class Configuration : IPluginConfiguration
 {
-    public int Version { get; set; } = 5;
+    public int Version { get; set; } = 6;
 
     public const string DefaultCustomPrompt = "Used in FFXIV online communication and raiding contexts.";
 
@@ -103,8 +103,11 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>The player's own glossary words. They replace shared glossary entries with the same Japanese.</summary>
     public List<GlossaryTerm> MyTerms { get; set; } = [];
 
-    /// <summary>Dancing Mad (Ultimate): mark yourself with these commands. A command that doesn't start with "/" is skipped.</summary>
+    /// <summary>Legacy (0.7.6): one switch for both DMU marks. Read once by <see cref="Normalize"/>.</summary>
     public bool DmuMarks { get; set; } = true;
+    /// <summary>Dancing Mad (Ultimate): mark yourself with these commands. A command that doesn't start with "/" is skipped.</summary>
+    public bool DmuP2Marks { get; set; } = true;
+    public bool DmuP3Marks { get; set; } = true;
     /// <summary>P2 Path of Light: the headmarker you get for soaking the 3rd tower.</summary>
     public string DmuP2Circle { get; set; } = "/mk stop <me>";
     public string DmuP2Cone { get; set; } = "/mk bind <me>";
@@ -112,6 +115,10 @@ public sealed class Configuration : IPluginConfiguration
     public string DmuP3First { get; set; } = "/mk attack <me>";
     public string DmuP3Second { get; set; } = "/mk bind <me>";
     public string DmuP3Third { get; set; } = "/mk stop <me>";
+    /// <summary>Show which Black Hole tether to grab and when, in the overlay.</summary>
+    public bool DmuP3Guide { get; set; } = true;
+    /// <summary>"Standard" or "Fae" (Fae swaps the DPS and support tethers).</summary>
+    public string DmuBlackHoleStrategy { get; set; } = "Standard";
     /// <summary>Show what your P4 debuffs ask of you, in a small overlay.</summary>
     public bool DmuGuide { get; set; } = true;
 
@@ -139,7 +146,10 @@ public sealed class Configuration : IPluginConfiguration
             Detached = true;
         }
         TabY = float.IsFinite(TabY) ? Math.Clamp(TabY, 0f, 1f) : 0.18f;
-        Version = 5;
+        // Version 6 split the DMU marks into P2 and P3 switches.
+        if (Version < 6 && !DmuMarks) DmuP2Marks = DmuP3Marks = false;
+        if (DmuBlackHoleStrategy != "Fae") DmuBlackHoleStrategy = "Standard";
+        Version = 6;
     }
 
     /// <summary>Older versions stored free text such as "/t Name@World"; split it into a dropdown channel and a tell target.</summary>

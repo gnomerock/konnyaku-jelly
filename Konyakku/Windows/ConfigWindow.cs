@@ -15,6 +15,7 @@ namespace Konyakku.Windows;
 internal sealed class ConfigWindow : Window
 {
     private static readonly string[] Efforts = ["none", "minimal", "low", "medium", "high"];
+    private static readonly string[] BlackHoleStrategies = ["Standard", "Fae"];
 
     private static readonly (ProviderKind Kind, string Name, string About)[] Providers =
     [
@@ -50,6 +51,8 @@ internal sealed class ConfigWindow : Window
     public override void PreDraw() => themePushed = Theme.Push(plugin.Config.UseTheme);
 
     public override void PostDraw() => Theme.Pop(themePushed);
+
+    public override void OnClose() => plugin.DmuPreview = false;
 
     public override void Draw()
     {
@@ -416,27 +419,49 @@ internal sealed class ConfigWindow : Window
         return changed;
     }
 
-    private static bool DrawDmu(Configuration c)
+    private bool DrawDmu(Configuration c)
     {
         var changed = false;
         Heading("Dancing Mad (Ultimate)");
-        changed |= Checkbox("Mark myself", c.DmuMarks, v => c.DmuMarks = v);
-        ImGui.SameLine();
-        ImGuiComponents.HelpMarker("Sends these commands for you, as if typed, at the moment you get the debuff or marker. Only inside Dancing Mad.");
-        using (ImRaii.Disabled(!c.DmuMarks))
+        ImGui.TextDisabled("Marks are sent for you, as if typed, the moment you get the marker or debuff. Only inside Dancing Mad.");
+
+        ImGui.Spacing();
+        Heading("P2 Path of Light");
+        changed |= Checkbox("Mark myself after soaking the 3rd tower", c.DmuP2Marks, v => c.DmuP2Marks = v);
+        using (ImRaii.Disabled(!c.DmuP2Marks))
         {
-            ImGui.TextDisabled("P2 Path of Light, after soaking the 3rd tower");
             changed |= CommandInput("Circle (spread)", c.DmuP2Circle, v => c.DmuP2Circle = v);
             changed |= CommandInput("Cone", c.DmuP2Cone, v => c.DmuP2Cone = v);
-            ImGui.TextDisabled("P3 Black Hole");
+        }
+
+        ImGui.Spacing();
+        Heading("P3 Black Hole");
+        changed |= Checkbox("Mark myself by my In Line debuff", c.DmuP3Marks, v => c.DmuP3Marks = v);
+        using (ImRaii.Disabled(!c.DmuP3Marks))
+        {
             changed |= CommandInput("First in Line", c.DmuP3First, v => c.DmuP3First = v);
             changed |= CommandInput("Second in Line", c.DmuP3Second, v => c.DmuP3Second = v);
             changed |= CommandInput("Third in Line", c.DmuP3Third, v => c.DmuP3Third = v);
         }
+        changed |= Checkbox("Show which tether to grab", c.DmuP3Guide, v => c.DmuP3Guide = v);
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("The overlay shows your Black Hole role (First/Second/Third in Line, DPS, Support or Accretion) and your current and next tether, counted from when you get your In Line debuff.");
+        using (ImRaii.Disabled(!c.DmuP3Guide))
+            changed |= Combo("Strategy", BlackHoleStrategies, c.DmuBlackHoleStrategy, v => c.DmuBlackHoleStrategy = v);
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("Fae swaps which tethers DPS and supports grab.");
+
         ImGui.Spacing();
+        Heading("P4");
         changed |= Checkbox("Show what my P4 debuffs mean", c.DmuGuide, v => c.DmuGuide = v);
         ImGui.SameLine();
-        ImGuiComponents.HelpMarker("A small overlay with what to do for each of your P4 debuffs, real or fake. Drag it where you like.");
+        ImGuiComponents.HelpMarker("The overlay says what to do for each of your P4 debuffs, real or fake.");
+
+        ImGui.Spacing();
+        var preview = plugin.DmuPreview;
+        if (ImGui.Checkbox("Show an example overlay", ref preview)) plugin.DmuPreview = preview;
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("Shows sample lines so you can drag the overlay where you want it. Turns off when you close Settings.");
         return changed;
     }
 

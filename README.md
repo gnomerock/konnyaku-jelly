@@ -123,8 +123,11 @@ These work well in macros, e.g. `/jelly /p Thanks for the run!`.
   - **Share** sends the ticked words to the shared glossary, after a preview of exactly what will be sent: each word, its meaning, and a random ID for your install, so the server counts each player once. No messages, names, worlds, channels, times or counts are sent, and the server doesn't keep your IP address. Words several players share are reviewed and added to the glossary everyone downloads.
 - **Look**: the blue & white theme (turn it off to use your Dalamud style) and how many lines the log keeps.
 - **DMU** (Dancing Mad Ultimate only):
-  - **Mark myself**: sends a marker command for you, as if typed. P2 Path of Light, after soaking the 3rd tower: `/mk stop <me>` for the circle, `/mk bind <me>` for the cone. P3 Black Hole: `/mk attack <me>`, `/mk bind <me>` and `/mk stop <me>` for First, Second and Third in Line. Each command can be changed.
-  - **Show what my P4 debuffs mean**: a small overlay with what to do for each of your P4 debuffs (real or fake, which Flood side). Drag it where you like.
+  - Marks are sent for you, as if typed, and each command can be changed. P2 and P3 have their own on/off switch.
+  - **P2 Path of Light**, after soaking the 3rd tower: `/mk stop <me>` for the circle, `/mk bind <me>` for the cone.
+  - **P3 Black Hole**: `/mk attack <me>`, `/mk bind <me>` and `/mk stop <me>` for First, Second and Third in Line. **Show which tether to grab** puts your role (In Line, DPS, Support or Accretion) and your current and next tether in the overlay. Pick the **Standard** or **Fae** strategy (Fae swaps the DPS and support tethers).
+  - **P4**: **Show what my P4 debuffs mean** adds what to do for each of your P4 debuffs (real or fake, which Flood side) to the overlay.
+  - **Show an example overlay** shows sample lines so you can drag the overlay where you want it.
 
 ### Tips and troubleshooting
 
