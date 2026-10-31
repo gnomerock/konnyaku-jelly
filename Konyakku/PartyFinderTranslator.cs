@@ -41,7 +41,7 @@ internal sealed class PartyFinderTranslator : IDisposable
     private void OnReceiveListing(IPartyFinderListing listing, IPartyFinderListingEventArgs args)
     {
         if (descriptions.Count > 2000) descriptions.Clear();
-        descriptions[listing.ContentId] = listing.Description.TextValue;
+        descriptions[listing.ContentId] = Language.WithoutAutoTranslate(listing.Description);
     }
 
     private void OnMenuOpened(IMenuOpenedArgs args)

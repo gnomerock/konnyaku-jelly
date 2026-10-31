@@ -203,7 +203,7 @@ public sealed class Plugin : IDalamudPlugin
         if (!Config.Enabled || msg.IsHandled || !Config.Channels.Contains(type)) return;
         if (Config.TranslateOnlyWhenOpen && !logWindow.IsOpen) return;
 
-        var text = msg.Message.TextValue.Trim();
+        var text = Language.WithoutAutoTranslate(msg.Message);
         if (text.Length < 2 || text.All(c => !char.IsLetter(c))) return;
 
         var senderName = msg.Sender.TextValue;

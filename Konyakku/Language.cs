@@ -1,4 +1,6 @@
 using System.Linq;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 
 namespace Konyakku;
 
@@ -19,6 +21,10 @@ internal static class Language
         "Thai" => text.Any(IsThai),
         _ => false,
     };
+
+    /// <summary>The text without the game's auto-translate phrases: every client already shows those in its own language.</summary>
+    public static string WithoutAutoTranslate(SeString text) =>
+        string.Concat(text.Payloads.Where(p => p is not AutoTranslatePayload).OfType<ITextProvider>().Select(p => p.Text)).Trim();
 
     private static bool IsKana(char c) => c is >= '\u3040' and <= '\u30FF';
 

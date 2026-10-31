@@ -36,6 +36,7 @@ dotnet build Konyakku/Konyakku.csproj -c Release   # or `dotnet build -c Release
 - **`Plugin.cs`**: the entry point.
   - Registers `/jelly` (no args toggles the window; `/jelly <text>` translates and copies; `/jelly /p <text>` translates and sends).
   - Hooks `ChatGui.ChatMessage` and owns the in-memory log (`LogEntry`, under `logLock`).
+  - Incoming text drops the game's auto-translate phrases first (`Language.WithoutAutoTranslate`, also used for cached Party Finder descriptions): every client already shows them in its own language.
   - Incoming chat is filtered in this order: `Enabled` → selected `Channels` → `TranslateOnlyWhenOpen` (skipped while the log window is closed) → own messages → `Language.IsAlreadyIn`, a cheap kana/ASCII check that avoids API calls. Only then does `TranslationService` run.
 - **`Translation/TranslationService.cs`**: the only path to the AI.
   - Builds the shared system prompt (`Instructions`) and appends the user's `CustomPrompt`.

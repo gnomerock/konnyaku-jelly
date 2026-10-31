@@ -70,6 +70,7 @@ Messages from the channels you picked show up on the **Chat** page, translated, 
 
 - **Right-click** a line to copy the translation.
 - Messages already in your language are skipped, so they cost nothing.
+- The game's auto-translate phrases (the ones between green and red arrows) already show in your language, so they're left out of what the AI translates. A message made only of them isn't sent at all.
 
 ### 5. Write chat
 
