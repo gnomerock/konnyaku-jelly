@@ -36,6 +36,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static ICondition Condition { get; private set; } = null!;
     [PluginService] internal static IGameInteropProvider GameInterop { get; private set; } = null!;
     [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
+    [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
 
     private const string TranslateCommand = "/jelly";
 
@@ -131,8 +132,7 @@ public sealed class Plugin : IDalamudPlugin
 
     internal void OpenConfig() => configWindow.IsOpen = true;
 
-    /// <summary>The DMU overlay shows sample lines, for placing it.</summary>
-    internal bool DmuPreview { get => dancingMad.Preview; set => dancingMad.Preview = value; }
+    internal DancingMad DancingMad => dancingMad;
 
     internal bool IsMainWindowOpen => logWindow.IsOpen;
 

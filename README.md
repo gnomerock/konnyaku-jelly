@@ -123,10 +123,10 @@ These work well in macros, e.g. `/jelly /p Thanks for the run!`.
   - **Share** sends the ticked words to the shared glossary, after a preview of exactly what will be sent: each word, its meaning, and a random ID for your install, so the server counts each player once. No messages, names, worlds, channels, times or counts are sent, and the server doesn't keep your IP address. Words several players share are reviewed and added to the glossary everyone downloads.
 - **Look**: the blue & white theme (turn it off to use your Dalamud style) and how many lines the log keeps.
 - **DMU** (Dancing Mad Ultimate only):
-  - Marks are sent for you, as if typed, and each command can be changed. P2 and P3 have their own on/off switch.
+  - Marks are sent for you, as if typed, and each command can be changed. P2 and P3 have their own on/off switch. **Delay before marking** waits 0–2000 ms first (500 ms by default); **Humanize** waits a random time between a Min and Max you set instead. Each command's **Test** button sends it right away (after the delay), anywhere, so you can check it outside the fight.
   - **P2 Path of Light**, after soaking the 3rd tower: `/mk stop <me>` for the circle, `/mk bind <me>` for the cone.
   - **P3 Black Hole**: `/mk attack <me>`, `/mk bind <me>` and `/mk stop <me>` for First, Second and Third in Line. **Show which tether to grab** puts your role (In Line, DPS, Support or Accretion) and your current and next tether in the overlay. Pick the **Standard** or **Fae** strategy (Fae swaps the DPS and support tethers).
-  - **P4**: **Show what my P4 debuffs mean** adds what to do for each of your P4 debuffs (real or fake, which Flood side) to the overlay.
+  - **P4**: **Show what my P4 debuffs mean** adds a tile for each of your P4 debuffs, as in DMU Helper: the call (`Real: Stack`, `Go Black` …), the debuff icon framed in the call's colour (gold/blue real, red fake, blue or purple Flood side) and its timer. Hover a tile for the full instruction.
   - **Show an example overlay** shows sample lines so you can drag the overlay where you want it.
 
 ### Tips and troubleshooting

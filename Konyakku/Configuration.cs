@@ -37,6 +37,8 @@ public sealed class Configuration : IPluginConfiguration
 {
     public int Version { get; set; } = 6;
 
+    public const int MaxDmuDelayMs = 2000;
+
     public const string DefaultCustomPrompt = "Used in FFXIV online communication and raiding contexts.";
 
     public bool Enabled { get; set; } = true;
@@ -108,6 +110,12 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Dancing Mad (Ultimate): mark yourself with these commands. A command that doesn't start with "/" is skipped.</summary>
     public bool DmuP2Marks { get; set; } = true;
     public bool DmuP3Marks { get; set; } = true;
+    /// <summary>Milliseconds to wait before sending a DMU mark.</summary>
+    public int DmuMarkDelayMs { get; set; } = 500;
+    /// <summary>Wait a random time between <see cref="DmuDelayMinMs"/> and <see cref="DmuDelayMaxMs"/> instead.</summary>
+    public bool DmuHumanize { get; set; } = false;
+    public int DmuDelayMinMs { get; set; } = 300;
+    public int DmuDelayMaxMs { get; set; } = 800;
     /// <summary>P2 Path of Light: the headmarker you get for soaking the 3rd tower.</summary>
     public string DmuP2Circle { get; set; } = "/mk stop <me>";
     public string DmuP2Cone { get; set; } = "/mk bind <me>";
@@ -149,6 +157,9 @@ public sealed class Configuration : IPluginConfiguration
         // Version 6 split the DMU marks into P2 and P3 switches.
         if (Version < 6 && !DmuMarks) DmuP2Marks = DmuP3Marks = false;
         if (DmuBlackHoleStrategy != "Fae") DmuBlackHoleStrategy = "Standard";
+        DmuMarkDelayMs = Math.Clamp(DmuMarkDelayMs, 0, MaxDmuDelayMs);
+        DmuDelayMinMs = Math.Clamp(DmuDelayMinMs, 0, MaxDmuDelayMs);
+        DmuDelayMaxMs = Math.Clamp(DmuDelayMaxMs, DmuDelayMinMs, MaxDmuDelayMs);
         Version = 6;
     }
 

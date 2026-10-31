@@ -5,19 +5,26 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.ClientState.Statuses;
 using Dalamud.Hooking;
+using Dalamud.Interface.Textures;
+using Dalamud.Interface.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Network;
-using Konyakku.Windows;
 using Lumina.Excel.Sheets;
 
 namespace Konyakku;
 
+/// <summary>One of your P4 debuffs: the short call, the full instruction and the colour of both.</summary>
+internal sealed record Callout(uint Status, string Label, string Detail, Vector4 Color, float Remaining);
+
 /// <summary>
-/// Dancing Mad (Ultimate) helper: marks yourself for P2 Path of Light and P3 Black Hole, and shows what your P4
-/// debuffs ask of you. IDs come from cactbot's dancing_mad.ts and Nainaiowo's DMU Helper (MIT).
+/// Dancing Mad (Ultimate) helper: marks yourself for P2 Path of Light and P3 Black Hole, and shows your Black Hole
+/// tethers and P4 debuff calls in an overlay. IDs, timings and calls come from cactbot's dancing_mad.ts and
+/// Nainaiowo's DMU Helper (MIT), whose callout tiles the overlay copies.
 /// </summary>
 internal sealed unsafe class DancingMad : IDisposable
 {
@@ -75,11 +82,29 @@ internal sealed unsafe class DancingMad : IDisposable
         (4, 2, 3, 'S', "grab the only tether clockwise from Kefka"),
     ];
 
+    // DMU Helper's palette.
+    private static readonly Vector4 Gold = new(1.0f, 0.78f, 0.18f, 1.0f);
+    private static readonly Vector4 RealColor = new(0.25f, 0.85f, 1.0f, 1.0f);
+    private static readonly Vector4 FakeColor = new(1.0f, 0.28f, 0.22f, 1.0f);
+    private static readonly Vector4 UnknownColor = new(0.75f, 0.75f, 0.75f, 1.0f);
+    private static readonly Vector4 BlueSide = new(0.35f, 0.72f, 1.0f, 1.0f);
+    private static readonly Vector4 PurpleSide = new(0.82f, 0.55f, 1.0f, 1.0f);
+    private static readonly Vector4 TimerColor = new(0.94f, 0.98f, 1.0f, 1.0f);
+
+    /// <summary>What the overlay draws: your In Line (and Accretion) icons with the Black Hole lines, then P4 tiles.</summary>
+    private sealed record Overlay(uint[] Icons, List<string> BlackHole, List<Callout> Debuffs)
+    {
+        public static readonly Overlay Empty = new([], [], []);
+        public bool IsEmpty => BlackHole.Count == 0 && Debuffs.Count == 0;
+    }
+
     private readonly Plugin plugin;
     private readonly Hook<ActionEffectHandler.Delegates.Receive> effectHook;
     private readonly Hook<PacketDispatcher.Delegates.HandleActorControlPacket> actorControlHook;
     private readonly HashSet<uint> neoExdeathIds, chaosIds;
-    private readonly Queue<string> marks = new();
+    private readonly Dictionary<uint, uint> statusIcons = [];
+    // Marks waiting for the delay. Filled from hooks and the settings window, sent from Framework.Update.
+    private readonly List<(DateTime Due, string Command)> marks = [];
     private readonly Dictionary<uint, bool?> realities = [];
     private (bool Real, DateTime Seen)? neoTell, chaosTell;
     private int towersResolved;
@@ -91,7 +116,7 @@ internal sealed unsafe class DancingMad : IDisposable
     private int myLine;
     private bool hadAccretion;
     private string? wound;
-    private volatile string[] guide = [];
+    private volatile Overlay overlay = Overlay.Empty;
 
     /// <summary>Show sample lines so the overlay can be placed. Set from the settings window.</summary>
     internal bool Preview { get; set; }
@@ -121,6 +146,17 @@ internal sealed unsafe class DancingMad : IDisposable
 
     private static bool InDmu => Plugin.ClientState.TerritoryType == Territory;
 
+    /// <summary>Sends a mark command after the configured delay. Also used by the settings window's Test buttons.</summary>
+    internal void QueueMark(string command)
+    {
+        command = command.Trim();
+        if (!command.StartsWith('/')) return;
+        var c = plugin.Config;
+        // Humanize: a random wait in [min, max], so the mark doesn't land the same instant every pull.
+        var delay = c.DmuHumanize ? Random.Shared.Next(c.DmuDelayMinMs, Math.Max(c.DmuDelayMinMs, c.DmuDelayMaxMs) + 1) : c.DmuMarkDelayMs;
+        lock (marks) marks.Add((DateTime.UtcNow.AddMilliseconds(Math.Clamp(delay, 0, Configuration.MaxDmuDelayMs)), command));
+    }
+
     private void OnActionEffect(uint casterId, Character* caster, Vector3* pos, ActionEffectHandler.Header* header, ActionEffectHandler.TargetEffects* effects, GameObjectId* targets)
     {
         effectHook.Original(casterId, caster, pos, header, effects, targets);
@@ -135,13 +171,14 @@ internal sealed unsafe class DancingMad : IDisposable
         actorControlHook.Original(entityId, category, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, targetId, isRecorded);
         if (category != HeadMarkerCategory || towersResolved != 3 || !InDmu || !plugin.Config.DmuP2Marks) return;
         if (entityId != Plugin.ObjectTable.LocalPlayer?.EntityId) return;
-        // Queued, not sent from inside the packet handler.
-        if (arg1 == SpreadMarker) marks.Enqueue(plugin.Config.DmuP2Circle);
-        else if (arg1 == ConeMarker) marks.Enqueue(plugin.Config.DmuP2Cone);
+        if (arg1 == SpreadMarker) QueueMark(plugin.Config.DmuP2Circle);
+        else if (arg1 == ConeMarker) QueueMark(plugin.Config.DmuP2Cone);
     }
 
     private void OnUpdate(Dalamud.Plugin.Services.IFramework framework)
     {
+        SendDueMarks();
+
         var me = Plugin.ObjectTable.LocalPlayer;
         if (!InDmu || me == null || !Plugin.Condition[ConditionFlag.InCombat])
         {
@@ -149,16 +186,22 @@ internal sealed unsafe class DancingMad : IDisposable
             return;
         }
 
-        while (marks.TryDequeue(out var command))
-            if (command.StartsWith('/')) ChatSender.Send(command);
-
         var statuses = me.StatusList.Where(s => s.StatusId != 0).ToArray();
         MarkBlackHole(statuses);
         ReadTells();
-        var lines = new List<string>();
-        if (plugin.Config.DmuP3Guide) lines.AddRange(BlackHoleGuide(statuses, IsDps(me)));
-        if (plugin.Config.DmuGuide) lines.AddRange(BuildGuide(statuses));
-        guide = lines.ToArray();
+        var blackHole = plugin.Config.DmuP3Guide ? BlackHoleGuide(statuses, IsDps(me)) : [];
+        var icons = blackHole.Count == 0 ? [] : hadAccretion ? new[] { FirstInLine + (uint)myLine - 1, Accretion } : new[] { FirstInLine + (uint)myLine - 1 };
+        overlay = new Overlay(icons, blackHole, plugin.Config.DmuGuide ? BuildCallouts(statuses) : []);
+    }
+
+    private void SendDueMarks()
+    {
+        lock (marks)
+        {
+            var now = DateTime.UtcNow;
+            foreach (var (_, command) in marks.Where(m => m.Due <= now)) ChatSender.Send(command);
+            marks.RemoveAll(m => m.Due <= now);
+        }
     }
 
     private void Reset()
@@ -170,11 +213,10 @@ internal sealed unsafe class DancingMad : IDisposable
         wound = null;
         neoTell = chaosTell = null;
         realities.Clear();
-        marks.Clear();
-        guide = [];
+        overlay = Overlay.Empty;
     }
 
-    private void MarkBlackHole(IEnumerable<Dalamud.Game.ClientState.Statuses.IStatus> statuses)
+    private void MarkBlackHole(IEnumerable<IStatus> statuses)
     {
         var line = statuses.FirstOrDefault(s => s.StatusId is >= FirstInLine and <= ThirdInLine)?.StatusId ?? 0;
         if (line != 0 && blackHoleStart == null)
@@ -183,10 +225,7 @@ internal sealed unsafe class DancingMad : IDisposable
             myLine = (int)(line - FirstInLine) + 1;
         }
         if (line != 0 && line != markedLine && plugin.Config.DmuP3Marks)
-        {
-            var command = (line - FirstInLine) switch { 0 => plugin.Config.DmuP3First, 1 => plugin.Config.DmuP3Second, _ => plugin.Config.DmuP3Third };
-            if (command.StartsWith('/')) ChatSender.Send(command);
-        }
+            QueueMark((line - FirstInLine) switch { 0 => plugin.Config.DmuP3First, 1 => plugin.Config.DmuP3Second, _ => plugin.Config.DmuP3Third });
         markedLine = line;
     }
 
@@ -204,7 +243,7 @@ internal sealed unsafe class DancingMad : IDisposable
         }
     }
 
-    private string[] BuildGuide(Dalamud.Game.ClientState.Statuses.IStatus[] statuses)
+    private List<Callout> BuildCallouts(IStatus[] statuses)
     {
         var ids = statuses.Select(s => s.StatusId).ToHashSet();
         if (ids.Contains(WhiteWound1) || ids.Contains(BlackWound2)) wound = "Black";
@@ -213,23 +252,22 @@ internal sealed unsafe class DancingMad : IDisposable
 
         foreach (var id in realities.Keys.Where(id => !ids.Contains(id)).ToArray()) realities.Remove(id);
 
-        var lines = new List<string>();
+        var callouts = new List<Callout>();
         foreach (var s in statuses)
         {
             var tell = s.StatusId is DynamicFluid or Entropy ? chaosTell : neoTell;
             // The tell can vanish before the debuff resolves, so keep the first answer.
             if (realities.GetValueOrDefault(s.StatusId) == null)
                 realities[s.StatusId] = tell is { } t && DateTime.UtcNow - t.Seen < TellFreshness ? t.Real : null;
-            if (Guide(s.StatusId, realities[s.StatusId], wound) is { } text)
-                lines.Add($"{text}  ({s.RemainingTime:0}s)");
+            if (P4Callout(s.StatusId, realities[s.StatusId], wound, s.RemainingTime) is { } callout) callouts.Add(callout);
             else realities.Remove(s.StatusId);
         }
-        return lines.ToArray();
+        return callouts;
     }
 
-    private static bool IsDps(Dalamud.Game.ClientState.Objects.SubKinds.IPlayerCharacter me) => me.ClassJob.Value.Role is 2 or 3;
+    private static bool IsDps(IPlayerCharacter me) => me.ClassJob.Value.Role is 2 or 3;
 
-    private List<string> BlackHoleGuide(Dalamud.Game.ClientState.Statuses.IStatus[] statuses, bool isDps)
+    private List<string> BlackHoleGuide(IStatus[] statuses, bool isDps)
     {
         if (blackHoleStart is not { } start) return [];
         if (statuses.Any(s => s.StatusId == Accretion)) hadAccretion = true;
@@ -255,6 +293,44 @@ internal sealed unsafe class DancingMad : IDisposable
         return lines;
     }
 
+    /// <summary>The tile for a P4 debuff, as DMU Helper calls it. Null for statuses this helper doesn't know.</summary>
+    internal static Callout? P4Callout(uint status, bool? real, string? wound, float remaining)
+    {
+        if (Guide(status, real, wound) is not { } detail) return null;
+        if (status is WhiteWound1 or WhiteWound2) return new(status, "White Wound", detail, PurpleSide, remaining);
+        if (status is BlackWound1 or BlackWound2) return new(status, "Black Wound", detail, BlueSide, remaining);
+        if (Destination(status, real, wound) is { } to) return new(status, $"Go {to}", detail, to == "Black" ? BlueSide : PurpleSide, remaining);
+        var label = status switch
+        {
+            AllaganField => "Allagan Field",
+            BeyondDeathLive => "Opposite Wound",
+            BeyondDeathDie => "Same Wound",
+            _ when real == null => "Unknown",
+            _ => $"{(real.Value ? "Real" : "Fake")}: {Resolution(status, real.Value)}",
+        };
+        var color = status is AllaganField or BeyondDeathLive or BeyondDeathDie || real == null ? UnknownColor : real.Value ? RealColor : FakeColor;
+        return new(status, label, detail, color, remaining);
+    }
+
+    private static string Resolution(uint status, bool real) => status switch
+    {
+        5545 => real ? "Stack" : "Spread",
+        5544 => real ? "Spread" : "Stack",
+        5543 => real ? "Look away" : "Look toward",
+        5546 => real ? "Stop" : "Move",
+        DynamicFluid => real ? "Donut" : "Point-blank",
+        Entropy => real ? "Point-blank" : "Donut",
+        _ => real ? "Real" : "Fake",
+    };
+
+    /// <summary>The Wound to go to for Flood: survive → the opposite one, die → your own.</summary>
+    private static string? Destination(uint status, bool? real, string? wound)
+    {
+        bool? die = status switch { AllaganField => !real, BeyondDeathLive => false, BeyondDeathDie => true, _ => null };
+        if (wound == null || die == null) return null;
+        return die.Value ? wound : wound == "Black" ? "White" : "Black";
+    }
+
     /// <summary>What a P4 debuff asks of you. Null for statuses this helper doesn't know.</summary>
     internal static string? Guide(uint status, bool? real, string? wound) => status switch
     {
@@ -264,41 +340,90 @@ internal sealed unsafe class DancingMad : IDisposable
         5546 => real switch { true => "Bomb (real): stop moving and acting", false => "Bomb (fake): keep moving", _ => "Bomb: real stillness, fake motion" },
         DynamicFluid => real switch { true => "Dynamic Fluid (real): delayed donut", false => "Dynamic Fluid (fake): delayed point-blank", _ => "Dynamic Fluid: real donut, fake point-blank" },
         Entropy => real switch { true => "Entropy (real): delayed point-blank", false => "Entropy (fake): delayed donut", _ => "Entropy: real point-blank, fake donut" },
-        // Survive → go to the opposite wound; die → go to your own.
-        AllaganField => real == null ? "Allagan Field: waiting for the truth/lie tell" : wound == null ? "Allagan Field: waiting for Wound" : $"Allagan Field ({(real.Value ? "real" : "fake")}): {Destination(wound, die: !real.Value)}",
-        BeyondDeathLive or BeyondDeathDie => wound == null ? "Beyond Death: waiting for Wound" : $"Beyond Death: {Destination(wound, die: status == BeyondDeathDie)}",
+        WhiteWound1 or WhiteWound2 => "White Wound",
+        BlackWound1 or BlackWound2 => "Black Wound",
+        AllaganField when real == null => "Allagan Field: waiting for the truth/lie tell",
+        AllaganField or BeyondDeathLive or BeyondDeathDie when Destination(status, real, wound) is { } to =>
+            $"{(status == AllaganField ? $"Allagan Field ({(real!.Value ? "real" : "fake")})" : "Beyond Death")}: go to {(to == "Black" ? "Blue" : "Purple")} ({to})",
+        AllaganField => "Allagan Field: waiting for Wound",
+        BeyondDeathLive or BeyondDeathDie => "Beyond Death: waiting for Wound",
         _ => null,
     };
 
-    private static string Destination(string wound, bool die)
-    {
-        var to = die ? wound : wound == "Black" ? "White" : "Black";
-        return $"go {(to == "Black" ? "Blue" : "Purple")} ({to})";
-    }
+    private static readonly Overlay PreviewOverlay = new(
+        [3005],
+        BlackHoleLines(2, true, false, false, 50),
+        [
+            P4Callout(5545, true, null, 12.3f)!,
+            P4Callout(5546, false, null, 18.6f)!,
+            P4Callout(AllaganField, false, "Black", 21.0f)!,
+            P4Callout(WhiteWound1, null, null, 34.2f)!,
+        ]);
 
-    private static readonly string[] PreviewLines =
-    [
-        .. BlackHoleLines(2, true, false, false, 50),
-        $"{Guide(5545, true, null)}  (12s)",
-        $"{Guide(AllaganField, false, "Black")}  (20s)",
-        $"{Guide(5546, null, null)}  (8s)",
-    ];
-
-    /// <summary>The P3/P4 overlay. Drag it anywhere; ImGui remembers where.</summary>
+    /// <summary>The overlay. Drag it anywhere; ImGui remembers where.</summary>
     public void Draw()
     {
-        var lines = Preview ? PreviewLines : guide;
-        if (lines.Length == 0) return;
+        var o = Preview ? PreviewOverlay : overlay;
+        if (o.IsEmpty) return;
         var viewport = ImGui.GetMainViewport();
         ImGui.SetNextWindowPos(viewport.Pos + viewport.Size * new Vector2(0.5f, 0.22f), ImGuiCond.FirstUseEver, new Vector2(0.5f, 0));
-        ImGui.SetNextWindowBgAlpha(0.6f);
+        ImGui.SetNextWindowBgAlpha(0.45f);
         const ImGuiWindowFlags flags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoFocusOnAppearing |
                                        ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoCollapse;
         if (ImGui.Begin("Jelly DMU###KonyakkuDmu", flags))
         {
-            ImGui.SetWindowFontScale(1.5f);
-            foreach (var line in lines) ImGui.TextColored(Theme.Yellow, line);
+            ImGui.SetWindowFontScale(1.2f);
+            // Status icons are 24×32.
+            var iconSize = new Vector2(30, 40) * ImGuiHelpers.GlobalScale;
+            if (o.BlackHole.Count > 0) DrawBlackHole(o, iconSize);
+            if (o.BlackHole.Count > 0 && o.Debuffs.Count > 0) ImGui.Separator();
+            for (var i = 0; i < o.Debuffs.Count; i++)
+            {
+                if (i > 0) ImGui.SameLine(0, ImGui.GetStyle().ItemSpacing.X * 2);
+                DrawTile(o.Debuffs[i], iconSize);
+            }
         }
         ImGui.End();
+    }
+
+    private void DrawBlackHole(Overlay o, Vector2 iconSize)
+    {
+        foreach (var icon in o.Icons)
+        {
+            DrawIcon(icon, iconSize, Gold);
+            ImGui.SameLine();
+        }
+        ImGui.BeginGroup();
+        ImGui.TextColored(Gold, o.BlackHole[0]);
+        foreach (var line in o.BlackHole.Skip(1)) ImGui.TextColored(line.Contains("NOW") ? RealColor : TimerColor, line);
+        ImGui.EndGroup();
+    }
+
+    /// <summary>DMU Helper's tile: the call, the icon framed in the call's colour, the timer; the instruction on hover.</summary>
+    private void DrawTile(Callout c, Vector2 iconSize)
+    {
+        var timer = c.Remaining > 0 ? $"{c.Remaining:0.0}s" : "-";
+        var width = MathF.Max(iconSize.X, MathF.Max(ImGui.CalcTextSize(c.Label).X, ImGui.CalcTextSize(timer).X));
+        var x = ImGui.GetCursorPosX();
+        ImGui.BeginGroup();
+        ImGui.SetCursorPosX(x + (width - ImGui.CalcTextSize(c.Label).X) / 2);
+        ImGui.TextColored(c.Color, c.Label);
+        ImGui.SetCursorPosX(x + (width - iconSize.X) / 2);
+        DrawIcon(c.Status, iconSize, c.Color);
+        ImGui.SetCursorPosX(x + (width - ImGui.CalcTextSize(timer).X) / 2);
+        ImGui.TextColored(TimerColor, timer);
+        ImGui.EndGroup();
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip(c.Detail);
+    }
+
+    private void DrawIcon(uint status, Vector2 size, Vector4 border)
+    {
+        if (!statusIcons.TryGetValue(status, out var icon))
+            statusIcons[status] = icon = Plugin.DataManager.GetExcelSheet<Status>().GetRowOrDefault(status)?.Icon ?? 0;
+        var start = ImGui.GetCursorScreenPos();
+        if (icon != 0 && Plugin.TextureProvider.GetFromGameIcon(new GameIconLookup(icon)).GetWrapOrDefault() is { } wrap)
+            ImGui.Image(wrap.Handle, size);
+        else ImGui.Dummy(size);
+        ImGui.GetWindowDrawList().AddRect(start - Vector2.One, start + size + Vector2.One, ImGui.GetColorU32(border), 4f, ImDrawFlags.None, 2f);
     }
 }

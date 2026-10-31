@@ -52,7 +52,7 @@ internal sealed class ConfigWindow : Window
 
     public override void PostDraw() => Theme.Pop(themePushed);
 
-    public override void OnClose() => plugin.DmuPreview = false;
+    public override void OnClose() => plugin.DancingMad.Preview = false;
 
     public override void Draw()
     {
@@ -423,7 +423,26 @@ internal sealed class ConfigWindow : Window
     {
         var changed = false;
         Heading("Dancing Mad (Ultimate)");
-        ImGui.TextDisabled("Marks are sent for you, as if typed, the moment you get the marker or debuff. Only inside Dancing Mad.");
+        ImGui.TextDisabled("Marks are sent for you, as if typed, when you get the marker or debuff. Only inside Dancing Mad.");
+        changed |= Checkbox("Humanize (random delay)", c.DmuHumanize, v => c.DmuHumanize = v);
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("Wait a random time between Min and Max before each mark, instead of the same delay every time. Test sends a command now (after the delay), anywhere, so you can check it.");
+        ImGui.SetNextItemWidth(FieldWidth);
+        if (c.DmuHumanize)
+        {
+            int min = c.DmuDelayMinMs, max = c.DmuDelayMaxMs;
+            if (ImGui.DragIntRange2("Delay range", ref min, ref max, 5f, 0, Configuration.MaxDmuDelayMs, "Min %d ms", "Max %d ms"))
+            {
+                c.DmuDelayMinMs = Math.Clamp(min, 0, Configuration.MaxDmuDelayMs);
+                c.DmuDelayMaxMs = Math.Clamp(max, c.DmuDelayMinMs, Configuration.MaxDmuDelayMs);
+                changed = true;
+            }
+        }
+        else
+        {
+            var delay = c.DmuMarkDelayMs;
+            if (ImGui.SliderInt("Delay before marking", ref delay, 0, Configuration.MaxDmuDelayMs, "%d ms")) { c.DmuMarkDelayMs = delay; changed = true; }
+        }
 
         ImGui.Spacing();
         Heading("P2 Path of Light");
@@ -458,19 +477,24 @@ internal sealed class ConfigWindow : Window
         ImGuiComponents.HelpMarker("The overlay says what to do for each of your P4 debuffs, real or fake.");
 
         ImGui.Spacing();
-        var preview = plugin.DmuPreview;
-        if (ImGui.Checkbox("Show an example overlay", ref preview)) plugin.DmuPreview = preview;
+        var preview = plugin.DancingMad.Preview;
+        if (ImGui.Checkbox("Show an example overlay", ref preview)) plugin.DancingMad.Preview = preview;
         ImGui.SameLine();
         ImGuiComponents.HelpMarker("Shows sample lines so you can drag the overlay where you want it. Turns off when you close Settings.");
         return changed;
     }
 
-    private static bool CommandInput(string label, string value, Action<string> set)
+    private bool CommandInput(string label, string value, Action<string> set)
     {
         ImGui.SetNextItemWidth(FieldWidth);
-        if (!ImGui.InputTextWithHint(label, "/mk stop <me>", ref value, 100)) return false;
-        set(value);
-        return true;
+        var changed = ImGui.InputTextWithHint($"##{label}", "/mk stop <me>", ref value, 100);
+        if (changed) set(value);
+        ImGui.SameLine();
+        if (ImGui.SmallButton($"Test##{label}")) plugin.DancingMad.QueueMark(value);
+        Theme.Tooltip($"Send \"{value}\" now");
+        ImGui.SameLine();
+        ImGui.TextUnformatted(label);
+        return changed;
     }
 
     private void RunTest()
