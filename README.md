@@ -130,7 +130,7 @@ These work well in macros, e.g. `/jelly /p Thanks for the run!`.
   - **Enable P3 auto-mark**: marks you `/mk attack <me>`, `/mk bind <me>` or `/mk ignore <me>` for your 1st, 2nd or 3rd in Line debuff.
   - You can change every mark command. Its **Test** button sends it right away (after the delay), anywhere, so you can check it outside the fight.
   - **Enable P3 tether helper**: shows your role and which Black Hole tether to grab next. Pick the **Standard** or **Fae** strategy (Fae swaps the DPS and support tethers).
-  - **Enable P4 debuff helper**: shows a tile for each of your P4 debuffs, as in DMU Helper: what to do (`Real: Stack`, `Go Black` …), the debuff icon framed in that colour, and its timer. Hover a tile for the full instruction.
+  - **Enable P4 debuff helper**: shows a tile for each of your P4 debuffs, as in DMU Helper: what to do (`Real: Stack`, `Go Black` …), the debuff icon framed in that colour, and its timer. Hover a tile for the full instruction. It also shows Chaos's **Tsunami/Inferno** cast (`Puddles first`, `Donuts second` …) and other players' **Cursed Shriek** gaze (`Look away from X` or `Face X`).
   - **Show example overlay**: shows a sample so you can drag the overlay into place.
 
 ### Tips and troubleshooting

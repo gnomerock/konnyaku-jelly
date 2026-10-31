@@ -18,8 +18,9 @@ using Lumina.Excel.Sheets;
 
 namespace Konyakku;
 
-/// <summary>One of your P4 debuffs: the short call, the full instruction and the colour of both.</summary>
-internal sealed record Callout(uint Status, string Label, string Detail, Vector4 Color, float Remaining);
+/// <summary>A P4 tile: the short call, the full instruction and the colour of both. <paramref name="Id"/> is a status,
+/// or an action when <paramref name="IsAction"/> (a boss cast).</summary>
+internal sealed record Callout(uint Id, string Label, string Detail, Vector4 Color, float Remaining, bool IsAction = false);
 
 /// <summary>
 /// Dancing Mad (Ultimate) helper: marks yourself for P2 Path of Light and P3 Black Hole, and shows your Black Hole
@@ -41,7 +42,9 @@ internal sealed unsafe class DancingMad : IDisposable
 
     private const uint WhiteWound1 = 4887, BlackWound1 = 4888, WhiteWound2 = 5541, BlackWound2 = 5542;
     private const uint AllaganField = 454, BeyondDeathLive = 5464, BeyondDeathDie = 1382;
-    private const uint DynamicFluid = 5548, Entropy = 5547;
+    private const uint DynamicFluid = 5548, Entropy = 5547, CursedShriek = 5543;
+    // Chaos's casts; real/fake comes from Chaos's tell.
+    private const uint Inferno = 0xBB20, Tsunami = 0xBB21;
 
     // P3 Black Hole: tether waves as seconds after the In Line debuffs, and who grabs which tether.
     // Role: D = DPS, S = support (swapped by the Fae strategy), A = had Accretion. Line 1-3 = First/Second/Third in Line.
@@ -102,10 +105,12 @@ internal sealed unsafe class DancingMad : IDisposable
     private readonly Hook<ActionEffectHandler.Delegates.Receive> effectHook;
     private readonly Hook<PacketDispatcher.Delegates.HandleActorControlPacket> actorControlHook;
     private readonly HashSet<uint> neoExdeathIds, chaosIds;
-    private readonly Dictionary<uint, uint> statusIcons = [];
+    private readonly Dictionary<(bool Action, uint Id), uint> icons = [];
     // Marks waiting for the delay. Filled from hooks and the settings window, sent from Framework.Update.
     private readonly List<(DateTime Due, string Command)> marks = [];
-    private readonly Dictionary<uint, bool?> realities = [];
+    // Real/fake per (player, debuff), caught when the debuff first shows.
+    private readonly Dictionary<(uint Entity, uint Status), bool?> realities = [];
+    private (uint Action, float Remaining)? chaosCast;
     private (bool Real, DateTime Seen)? neoTell, chaosTell;
     private int towersResolved;
     private DateTime lastTower;
@@ -191,7 +196,7 @@ internal sealed unsafe class DancingMad : IDisposable
         ReadTells();
         var blackHole = plugin.Config.DmuP3Guide ? BlackHoleGuide(statuses, IsDps(me)) : [];
         var icons = blackHole.Count == 0 ? [] : hadAccretion ? new[] { FirstInLine + (uint)myLine - 1, Accretion } : new[] { FirstInLine + (uint)myLine - 1 };
-        overlay = new Overlay(icons, blackHole, plugin.Config.DmuGuide ? BuildCallouts(statuses) : []);
+        overlay = new Overlay(icons, blackHole, plugin.Config.DmuGuide ? BuildCallouts(me, statuses) : []);
     }
 
     private void SendDueMarks()
@@ -231,11 +236,14 @@ internal sealed unsafe class DancingMad : IDisposable
 
     private void ReadTells()
     {
+        chaosCast = null;
         foreach (var obj in Plugin.ObjectTable)
         {
             if (obj is not IBattleNpc npc) continue;
             var isNeo = neoExdeathIds.Contains(npc.NameId);
             if (!isNeo && !chaosIds.Contains(npc.NameId)) continue;
+            if (!isNeo && npc.IsCasting && npc.CastActionId is Inferno or Tsunami)
+                chaosCast = (npc.CastActionId, npc.TotalCastTime - npc.CurrentCastTime);
             var tell = npc.StatusList.FirstOrDefault(s => s.StatusId == BossTell);
             if (tell == null || !TellIsReal.TryGetValue(tell.Param, out var real)) continue;
             if (isNeo) neoTell = (real, DateTime.UtcNow);
@@ -243,26 +251,66 @@ internal sealed unsafe class DancingMad : IDisposable
         }
     }
 
-    private List<Callout> BuildCallouts(IStatus[] statuses)
+    private List<Callout> BuildCallouts(IPlayerCharacter me, IStatus[] statuses)
     {
         var ids = statuses.Select(s => s.StatusId).ToHashSet();
         if (ids.Contains(WhiteWound1) || ids.Contains(BlackWound2)) wound = "Black";
         else if (ids.Contains(WhiteWound2) || ids.Contains(BlackWound1)) wound = "White";
         else if (!ids.Contains(AllaganField) && !ids.Contains(BeyondDeathLive) && !ids.Contains(BeyondDeathDie)) wound = null;
 
-        foreach (var id in realities.Keys.Where(id => !ids.Contains(id)).ToArray()) realities.Remove(id);
-
+        var seen = new HashSet<(uint, uint)>();
         var callouts = new List<Callout>();
         foreach (var s in statuses)
+            if (P4Callout(s.StatusId, Reality(me.EntityId, s.StatusId, seen), wound, s.RemainingTime) is { } callout) callouts.Add(callout);
+
+        if (chaosCast is { } cast)
+            callouts.Add(ChaosCastCallout(cast.Action, chaosTell is { } t && DateTime.UtcNow - t.Seen < TellFreshness ? t.Real : null, cast.Remaining));
+
+        // Other players' Cursed Shriek: everyone else has to face it or look away. In DMU everyone nearby is in your party.
+        foreach (var obj in Plugin.ObjectTable)
         {
-            var tell = s.StatusId is DynamicFluid or Entropy ? chaosTell : neoTell;
-            // The tell can vanish before the debuff resolves, so keep the first answer.
-            if (realities.GetValueOrDefault(s.StatusId) == null)
-                realities[s.StatusId] = tell is { } t && DateTime.UtcNow - t.Seen < TellFreshness ? t.Real : null;
-            if (P4Callout(s.StatusId, realities[s.StatusId], wound, s.RemainingTime) is { } callout) callouts.Add(callout);
-            else realities.Remove(s.StatusId);
+            if (obj is not IPlayerCharacter p || p.EntityId == me.EntityId) continue;
+            if (p.StatusList.FirstOrDefault(s => s.StatusId == CursedShriek) is { } shriek)
+                callouts.Add(GazeCallout(p.Name.TextValue, Reality(p.EntityId, CursedShriek, seen), shriek.RemainingTime));
         }
+
+        foreach (var key in realities.Keys.Where(k => !seen.Contains(k)).ToArray()) realities.Remove(key);
         return callouts;
+    }
+
+    /// <summary>Whether a player's debuff is real. The tell can vanish before the debuff resolves, so the first answer is kept.</summary>
+    private bool? Reality(uint entity, uint status, HashSet<(uint, uint)> seen)
+    {
+        var key = (entity, status);
+        seen.Add(key);
+        if (realities.GetValueOrDefault(key) is { } known) return known;
+        var tell = status is DynamicFluid or Entropy ? chaosTell : neoTell;
+        return realities[key] = tell is { } t && DateTime.UtcNow - t.Seen < TellFreshness ? t.Real : null;
+    }
+
+    /// <summary>Chaos's Tsunami/Inferno, as cactbot calls it.</summary>
+    internal static Callout ChaosCastCallout(uint action, bool? real, float remaining)
+    {
+        var name = action == Inferno ? "Inferno" : "Tsunami";
+        var call = (action == Inferno, real) switch
+        {
+            (true, true) => "Puddles first",
+            (true, false) => "Donuts first",
+            (false, true) => "Donuts second",
+            (false, false) => "Puddles second",
+            _ => name,
+        };
+        var detail = real == null ? $"Chaos casts {name}: real/fake not caught" : $"Chaos casts {name} ({(real.Value ? "real" : "fake")}): {call.ToLowerInvariant()}";
+        return new(action, call, detail, real == null ? UnknownColor : real.Value ? RealColor : FakeColor, remaining, IsAction: true);
+    }
+
+    /// <summary>Another player's Cursed Shriek: real → look away from them, fake → face them.</summary>
+    internal static Callout GazeCallout(string name, bool? real, float remaining)
+    {
+        var first = name.Split(' ')[0];
+        var call = real switch { true => $"Look away from {first}", false => $"Face {first}", _ => $"Gaze: {first}" };
+        var detail = real switch { true => $"Cursed Shriek on {name} (real): look away from them", false => $"Cursed Shriek on {name} (fake): face them", _ => $"Cursed Shriek on {name}: real looks away, fake faces them" };
+        return new(CursedShriek, call, detail, real == null ? UnknownColor : real.Value ? RealColor : FakeColor, remaining);
     }
 
     private static bool IsDps(IPlayerCharacter me) => me.ClassJob.Value.Role is 2 or 3;
@@ -318,8 +366,8 @@ internal sealed unsafe class DancingMad : IDisposable
         5544 => real ? "Spread" : "Stack",
         5543 => real ? "Look away" : "Look toward",
         5546 => real ? "Stop" : "Move",
-        DynamicFluid => real ? "Donut" : "Point-blank",
-        Entropy => real ? "Point-blank" : "Donut",
+        DynamicFluid => real ? "Stack for donuts" : "Bait puddles",
+        Entropy => real ? "Bait puddles" : "Stack for donuts",
         _ => real ? "Real" : "Fake",
     };
 
@@ -338,8 +386,8 @@ internal sealed unsafe class DancingMad : IDisposable
         5544 => real switch { true => "Lightning (real): spread from your group", false => "Lightning (fake): stack with your group", _ => "Lightning: real spreads, fake stacks" },
         5543 => real switch { true => "Shriek (real): stand out, everyone looks away", false => "Shriek (fake): stand center, everyone looks at you", _ => "Shriek: real look away, fake look at" },
         5546 => real switch { true => "Bomb (real): stop moving and acting", false => "Bomb (fake): keep moving", _ => "Bomb: real stillness, fake motion" },
-        DynamicFluid => real switch { true => "Dynamic Fluid (real): delayed donut", false => "Dynamic Fluid (fake): delayed point-blank", _ => "Dynamic Fluid: real donut, fake point-blank" },
-        Entropy => real switch { true => "Entropy (real): delayed point-blank", false => "Entropy (fake): delayed donut", _ => "Entropy: real point-blank, fake donut" },
+        DynamicFluid => real switch { true => "Dynamic Fluid (real): stack for donuts", false => "Dynamic Fluid (fake): bait puddles", _ => "Dynamic Fluid: real donuts, fake puddles" },
+        Entropy => real switch { true => "Entropy (real): bait puddles", false => "Entropy (fake): stack for donuts", _ => "Entropy: real puddles, fake donuts" },
         WhiteWound1 or WhiteWound2 => "White Wound",
         BlackWound1 or BlackWound2 => "Black Wound",
         AllaganField when real == null => "Allagan Field: waiting for the truth/lie tell",
@@ -356,8 +404,10 @@ internal sealed unsafe class DancingMad : IDisposable
         [
             P4Callout(5545, true, null, 12.3f)!,
             P4Callout(5546, false, null, 18.6f)!,
+            P4Callout(Entropy, false, null, 25.4f)!,
             P4Callout(AllaganField, false, "Black", 21.0f)!,
-            P4Callout(WhiteWound1, null, null, 34.2f)!,
+            ChaosCastCallout(Inferno, true, 6.1f),
+            GazeCallout("Alisaie Leveilleur", true, 9.8f),
         ]);
 
     /// <summary>The overlay. Drag it anywhere; ImGui remembers where.</summary>
@@ -390,7 +440,7 @@ internal sealed unsafe class DancingMad : IDisposable
     {
         foreach (var icon in o.Icons)
         {
-            DrawIcon(icon, iconSize, Gold);
+            DrawIcon(icon, false, iconSize, Gold);
             ImGui.SameLine();
         }
         ImGui.BeginGroup();
@@ -409,17 +459,20 @@ internal sealed unsafe class DancingMad : IDisposable
         ImGui.SetCursorPosX(x + (width - ImGui.CalcTextSize(c.Label).X) / 2);
         ImGui.TextColored(c.Color, c.Label);
         ImGui.SetCursorPosX(x + (width - iconSize.X) / 2);
-        DrawIcon(c.Status, iconSize, c.Color);
+        // Action icons are square, status icons 24×32.
+        DrawIcon(c.Id, c.IsAction, c.IsAction ? new Vector2(iconSize.Y) : iconSize, c.Color);
         ImGui.SetCursorPosX(x + (width - ImGui.CalcTextSize(timer).X) / 2);
         ImGui.TextColored(TimerColor, timer);
         ImGui.EndGroup();
         if (ImGui.IsItemHovered()) ImGui.SetTooltip(c.Detail);
     }
 
-    private void DrawIcon(uint status, Vector2 size, Vector4 border)
+    private void DrawIcon(uint id, bool action, Vector2 size, Vector4 border)
     {
-        if (!statusIcons.TryGetValue(status, out var icon))
-            statusIcons[status] = icon = Plugin.DataManager.GetExcelSheet<Status>().GetRowOrDefault(status)?.Icon ?? 0;
+        if (!icons.TryGetValue((action, id), out var icon))
+            icons[(action, id)] = icon = action
+                ? Plugin.DataManager.GetExcelSheet<Lumina.Excel.Sheets.Action>().GetRowOrDefault(id)?.Icon ?? 0u
+                : Plugin.DataManager.GetExcelSheet<Status>().GetRowOrDefault(id)?.Icon ?? 0u;
         var start = ImGui.GetCursorScreenPos();
         if (icon != 0 && Plugin.TextureProvider.GetFromGameIcon(new GameIconLookup(icon)).GetWrapOrDefault() is { } wrap)
             ImGui.Image(wrap.Handle, size);
