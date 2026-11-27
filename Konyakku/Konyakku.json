@@ -1,9 +1,9 @@
 {
   "Author": "gnomerock",
   "Name": "Konyaku Jelly",
-  "Punchline": "translate FFXIV chat with ChatGPT, Claude or Gemini.",
-  "Description": "Translates incoming chat into your language and lets you write messages in your own language, translated before sending. Works with your ChatGPT subscription (via Codex CLI login) or an OpenAI, Claude or Gemini API key. Right-click a listing in the game's Party Finder to translate its description.",
+  "Punchline": "translate FFXIV chat with Google Translate.",
+  "Description": "Translates incoming chat into your language and lets you write messages in your own language, translated before sending. Uses Google Translate: free, no key or login needed. Right-click a listing in the game's Party Finder to translate its description.",
   "ApplicableVersion": "any",
   "IconUrl": "https://raw.githubusercontent.com/gnomerock/konnyaku-jelly/main/Konyakku/images/icon.png",
-  "Tags": ["chat", "translation", "translate", "thai", "chatgpt", "openai", "claude", "gemini", "party finder", "pf"]
+  "Tags": ["chat", "translation", "translate", "thai", "google translate", "party finder", "pf"]
 }

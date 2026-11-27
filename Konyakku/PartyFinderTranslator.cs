@@ -7,7 +7,6 @@ using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using Konyakku.Translation;
 
 namespace Konyakku;
 
@@ -81,7 +80,7 @@ internal sealed class PartyFinderTranslator : IDisposable
         SeString message;
         try
         {
-            var result = await plugin.Translator.TranslateAsync(description, Target, new Received(true, string.Empty));
+            var result = await plugin.Translator.TranslateAsync(description, Target);
             plugin.AddLog(new LogEntry(DateTime.Now, "PF", "Party Finder", description, result ?? description, false));
             message = new SeStringBuilder()
                 .AddUiForeground("[Jelly PF] ", 45)

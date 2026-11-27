@@ -13,6 +13,14 @@ internal static class Language
     /// <summary>Languages other players' chat can be translated into. Thai is only for reading: the game can't show it in chat.</summary>
     public static readonly string[] Incoming = [.. All, "Thai"];
 
+    /// <summary>Google Translate's code for a language name above.</summary>
+    public static string Code(string language) => language switch
+    {
+        "Japanese" => "ja",
+        "Thai" => "th",
+        _ => "en",
+    };
+
     /// <summary>Cheap check that skips the API call when a message is obviously in the target language already.</summary>
     public static bool IsAlreadyIn(string text, string target) => target switch
     {

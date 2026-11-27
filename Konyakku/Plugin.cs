@@ -42,8 +42,6 @@ public sealed class Plugin : IDalamudPlugin
 
     internal Configuration Config { get; }
     internal TranslationService Translator { get; }
-    internal TermCollector Terms { get; }
-    internal Glossary Glossary { get; }
     /// <summary>Dalamud's default font with Thai merged in, for the jelly window.</summary>
     internal IFontHandle ChatFont { get; }
 
@@ -62,9 +60,7 @@ public sealed class Plugin : IDalamudPlugin
     {
         Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Config.Normalize();
-        Terms = new TermCollector(Config, PluginInterface.GetPluginConfigDirectory());
-        Glossary = new Glossary(Config, PluginInterface.GetPluginConfigDirectory());
-        Translator = new TranslationService(Config, Terms, Glossary);
+        Translator = new TranslationService();
         ChatFont = PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(BuildChatFont));
 
         configWindow = new ConfigWindow(this);
@@ -99,7 +95,6 @@ public sealed class Plugin : IDalamudPlugin
         windows.RemoveAllWindows();
         ChatFont.Dispose();
         Translator.Dispose();
-        Glossary.Dispose();
     }
 
     // Thai fonts that ship with Windows. On Wine none may exist, and Thai then shows as "?".
@@ -217,7 +212,7 @@ public sealed class Plugin : IDalamudPlugin
     {
         try
         {
-            var result = await Translator.TranslateAsync(text, Config.IncomingTarget, new Received(TermCollector.IsPublic(type), sender));
+            var result = await Translator.TranslateAsync(text, Config.IncomingTarget);
             if (result == null) return;
 
             AddLog(new LogEntry(DateTime.Now, ChannelNames.Short(type), sender, text, result, false));
